@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AromaLux - Perfume Investment & Earnings Platform</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        gold: { DEFAULT: '#D4AF37', light: '#F3E5AB', dark: '#AA8C2C' },
+                        darkBg: '#0F172A',
+                        cardBg: '#1E293B'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-card { background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(212, 175, 55, 0.2); }
+        .gold-gradient { background: linear-gradient(135deg, #F3E5AB 0%, #D4AF37 50%, #AA8C2C 100%); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .auth-view { display: none; }
+        .auth-view.active { display: block; }
+    </style>
+</head>
+<body class="bg-darkBg text-slate-100 min-h-screen pb-28">
+
+    <!-- ================= AUTHENTICATION WRAPPER ================= -->
+    <div id="authWrapper" class="fixed inset-0 z-50 bg-darkBg flex items-center justify-center p-4 overflow-y-auto">
+        <div class="max-w-md w-full glass-card p-6 rounded-3xl border border-gold/30 shadow-2xl relative">
+            <div class="text-center mb-5">
+                <div class="w-14 h-14 rounded-full gold-gradient mx-auto flex items-center justify-center text-slate-950 font-bold text-2xl shadow-lg shadow-gold/20 mb-2">
+                    <i class="fa-solid fa-spray-can-sparkles"></i>
+                </div>
+                <h1 class="text-xl font-extrabold text-gold-light tracking-wide">AromaLux UG</h1>
+                <p class="text-xs text-slate-400 mt-0.5">Luxury Perfume Investment Platform</p>
+            </div>
+
+            <!-- LOGIN VIEW -->
+            <div id="authLogin" class="auth-view active space-y-4">
+                <h2 class="text-sm font-bold text-slate-200 border-b border-slate-700/60 pb-2"><i class="fa-solid fa-right-to-bracket text-gold mr-2"></i> Member Login</h2>
+                <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Phone Number (10 digits starting with 07)</label>
+                    <input type="text" id="loginPhone" maxlength="10" placeholder="07XXXXXXXX" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-gold">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Password</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-gold">
+                </div>
+                <div class="flex justify-between items-center text-xs">
+                    <span class="text-slate-400">Forgot password?</span>
+                    <button onclick="switchAuthView('authForgot')" class="text-gold font-bold hover:underline">Reset here</button>
+                </div>
+                <button onclick="handleLogin()" class="w-full gold-gradient text-slate-950 font-extrabold py-3 rounded-xl text-xs shadow-lg mt-2">Login to Account</button>
+                <p class="text-center text-xs text-slate-400 mt-4">Don't have an account? <button onclick="switchAuthView('authRegister')" class="text-gold font-bold hover:underline">Register Now (Get 3k Bonus)</button></p>
+            </div>
+
+            <!-- REGISTER VIEW -->
+            <div id="authRegister" class="auth-view space-y-3">
+                <h2 class="text-sm font-bold text-slate-200 border-b border-slate-700/60 pb-2"><i class="fa-solid fa-user-plus text-gold mr-2"></i> Create New Account</h2>
+                <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Username / Full Name</label>
+                    <input type="text" id="regUsername" placeholder="e.g., joshua" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Phone Number (Must start with 07, 10 digits)</label>
+                    <input type="text" id="regPhone" maxlength="10" placeholder="07XXXXXXXX" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Password (Alphanumeric: letters & numbers)</label>
+                    <input type="password" id="regPassword" placeholder="e.g., Pass1234" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Confirm Password</label>
+                    <input type="password" id="regConfirmPassword" placeholder="Confirm password" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Referral Username (Ref)</label>
+                    <input type="text" id="regRef" placeholder="Referrer's username (optional)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                </div>
+                <div class="bg-gold/10 border border-gold/30 p-2 rounded-xl text-[11px] text-gold-light">
+                     Includes instant <strong>3,000 UGX</strong> Welcome Bonus upon registration!
+                </div>
+                <button onclick="handleRegister()" class="w-full gold-gradient text-slate-950 font-extrabold py-3 rounded-xl text-xs shadow-lg mt-1">Register & Claim Bonus</button>
+                <p class="text-center text-xs text-slate-400 mt-3">Already have an account? <button onclick="switchAuthView('authLogin')" class="text-gold font-bold hover:underline">Login here</button></p>
+            </div>
+
+            <!-- FORGOT PASSWORD VIEW -->
+            <div id="authForgot" class="auth-view space-y-4">
+                <h2 class="text-sm font-bold text-slate-200 border-b border-slate-700/60 pb-2"><i class="fa-solid fa-key text-gold mr-2"></i> Password Reset</h2>
+                <p class="text-xs text-slate-300">Enter your registered 10-digit phone number starting with 07 to receive a reset code.</p>
+                <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Phone Number</label>
+                    <input type="text" id="forgotPhone" maxlength="10" placeholder="07XXXXXXXX" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-gold">
+                </div>
+                <div id="resetCodeSection" class="hidden space-y-3">
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">Enter 4-Digit Code Sent to Phone</label>
+                        <input type="text" id="resetCodeInput" placeholder="1234" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">New Password (Alphanumeric)</label>
+                        <input type="password" id="newPasswordInput" placeholder="e.g., Pass1234" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
+                </div>
+                <button id="forgotBtn" onclick="requestResetCode()" class="w-full gold-gradient text-slate-950 font-extrabold py-3 rounded-xl text-xs shadow-lg mt-2">Send Reset Code</button>
+                <p class="text-center text-xs text-slate-400 mt-4"><button onclick="switchAuthView('authLogin')" class="text-gold font-bold hover:underline"><i class="fa-solid fa-arrow-left mr-1"></i> Back to Login</button></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MAIN APP INTERFACE ================= -->
+    <div id="mainAppWrapper" class="hidden">
+        <!-- Top Header -->
+        <header class="sticky top-0 z-40 bg-darkBg/95 backdrop-blur-md border-b border-slate-800 px-4 py-3">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <div class="w-9 h-9 rounded-full gold-gradient flex items-center justify-center text-slate-950 font-bold text-lg shadow-lg shadow-gold/20">
+                        <i class="fa-solid fa-spray-can-sparkles"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-sm tracking-wider text-gold-light">AromaLux UG</h1>
+                        <p class="text-[9px] text-slate-400">Luxury Investment</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button onclick="openModal('depositModal')" class="bg-gold hover:bg-gold-dark text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs transition transform active:scale-95 shadow-md">
+                        <i class="fa-solid fa-wallet mr-1"></i> Deposit
+                    </button>
+                    <button onclick="openModal('withdrawModal')" class="bg-slate-800 hover:bg-slate-700 text-gold-light border border-gold/30 font-bold px-3 py-1.5 rounded-lg text-xs transition transform active:scale-95">
+                        Withdraw
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Container -->
+        <main class="max-w-6xl mx-auto px-4 mt-4">
+
+            <!-- ================= TAB 1: HOME ================= -->
+            <div id="tab-home" class="tab-content active">
+                <section class="mb-4">
+                    <div class="gold-gradient rounded-2xl p-4 text-slate-950 shadow-xl relative overflow-hidden">
+                        <div class="absolute -right-6 -bottom-6 text-slate-950/10 text-9xl font-extrabold pointer-events-none">
+                            <i class="fa-solid fa-gem"></i>
+                        </div>
+                        <div class="relative z-10">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="text-[10px] font-bold uppercase tracking-wider bg-slate-950/20 px-2 py-0.5 rounded-full text-slate-900">Active Account</span>
+                                    <h2 class="text-3xl font-extrabold mt-1.5"><span id="userBalance">3,000</span> <span class="text-xs font-bold">UGX</span></h2>
+                                    <p class="text-xs text-slate-900 font-medium mt-0.5">Includes <span class="underline font-bold">3,000 UGX</span> Welcome Bonus </p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-[10px] block text-slate-900 font-semibold">Daily Rate</span>
+                                    <span class="text-sm font-black bg-slate-950 text-gold-light px-2 py-0.5 rounded-md shadow">10% Daily</span>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-950/10">
+                                <div>
+                                    <span class="text-[10px] text-slate-900 font-semibold block">Total Invested</span>
+                                    <span class="text-sm font-bold" id="totalInvested">0 UGX</span>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] text-slate-900 font-semibold block">Accumulated Profit</span>
+                                    <span class="text-sm font-bold text-emerald-950" id="totalEarned">0 UGX</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="grid grid-cols-2 gap-2.5 mb-5">
+                    <div class="glass-card p-2.5 rounded-xl text-center">
+                        <i class="fa-solid fa-arrow-down-long text-gold mb-1 text-xs"></i>
+                        <span class="block text-[10px] text-slate-400">Min. Deposit</span>
+                        <span class="font-bold text-xs text-slate-200">15,000 UGX</span>
+                    </div>
+                    <div class="glass-card p-2.5 rounded-xl text-center">
+                        <i class="fa-solid fa-arrow-up-long text-emerald-400 mb-1 text-xs"></i>
+                        <span class="block text-[10px] text-slate-400">Min. Withdrawal</span>
+                        <span class="font-bold text-xs text-slate-200">5,000 UGX</span>
+                    </div>
+                    <div class="glass-card p-2.5 rounded-xl text-center">
+                        <i class="fa-solid fa-percent text-gold mb-1 text-xs"></i>
+                        <span class="block text-[10px] text-slate-400">Daily Return</span>
+                        <span class="font-bold text-xs text-slate-200">10% Every 24h</span>
+                    </div>
+                    <div class="glass-card p-2.5 rounded-xl text-center">
+                        <i class="fa-solid fa-clock text-blue-400 mb-1 text-xs"></i>
+                        <span class="block text-[10px] text-slate-400">Live Payout Timer</span>
+                        <span class="font-bold text-xs text-blue-300">Active Live</span>
+                    </div>
+                </div>
+
+                <div class="glass-card p-4 rounded-2xl mb-4 border border-gold/30 flex items-center justify-between">
+                    <div>
+                        <h4 class="font-bold text-sm text-gold-light">Ready to grow your wealth?</h4>
+                        <p class="text-[11px] text-slate-300 mt-0.5">Explore our high-yield luxury perfume portfolios.</p>
+                    </div>
+                    <button onclick="switchTab('products')" class="gold-gradient text-slate-950 font-bold px-4 py-2 rounded-xl text-xs shadow-md">
+                        View Plans
+                    </button>
+                </div>
+            </div>
+
+            <!-- ================= TAB 2: PRODUCTS ================= -->
+            <div id="tab-products" class="tab-content">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-base font-bold text-slate-200 flex items-center">
+                        <i class="fa-solid fa-spray-can text-gold mr-2"></i> VIP Perfume Investment Packages
+                    </h3>
+                    <span class="text-[11px] text-slate-400 font-medium">11 Plans</span>
+                </div>
+                <div id="perfumeGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
+            <!-- ================= TAB 3: TEAM ================= -->
+            <div id="tab-team" class="tab-content">
+                <h3 class="text-base font-bold text-slate-200 mb-3 flex items-center">
+                    <i class="fa-solid fa-users text-gold mr-2"></i> My Referral Team
+                </h3>
+                <div class="glass-card p-4 rounded-2xl mb-4 text-center">
+                    <span class="text-xs text-slate-400 block">Total Team Members</span>
+                    <span class="text-3xl font-extrabold text-gold mt-1 block" id="teamCount">0</span>
+                    <p class="text-[11px] text-slate-300 mt-2">Earn an instant <strong>10% cash bonus</strong> automatically added when a member makes their <strong>first product purchase</strong>!</p>
+                    <div class="mt-4 pt-3 border-t border-slate-700/60 flex items-center justify-between bg-slate-900/50 p-3 rounded-xl">
+                        <span class="text-xs text-slate-300 truncate mr-2" id="refLink">https://aromalux.ug/ref/user</span>
+                        <button onclick="copyRefLink()" class="bg-gold text-slate-950 font-bold px-3 py-1 rounded-lg text-xs shrink-0">Copy Link</button>
+                    </div>
+                </div>
+
+                <h4 class="font-bold text-sm text-slate-200 mb-2">Invited Team Members & Details</h4>
+                <div class="space-y-2.5" id="teamList">
+                    <div class="glass-card p-4 rounded-xl text-center text-slate-400 text-xs">
+                        <i class="fa-solid fa-user-group text-xl mb-1.5 text-slate-600 block"></i>
+                        No team members yet. Share your referral link to start building your team!
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TAB 4: MY PRODUCTS ================= -->
+            <div id="tab-my-products" class="tab-content">
+                <h3 class="text-base font-bold text-slate-200 mb-3 flex items-center">
+                    <i class="fa-solid fa-box-archive text-gold mr-2"></i> My Purchased Perfume Portfolios
+                </h3>
+                <div id="activeInvestmentsList" class="space-y-3">
+                    <div class="glass-card p-5 rounded-xl text-center text-slate-400 text-xs">
+                        <i class="fa-solid fa-box-open text-2xl mb-2 text-slate-600 block"></i>
+                        No active perfume packages yet. Go to Products to invest!
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= TAB 5: TRANSACTIONS ================= -->
+            <div id="tab-transactions" class="tab-content">
+                <h3 class="text-base font-bold text-slate-200 mb-3 flex items-center">
+                    <i class="fa-solid fa-receipt text-gold mr-2"></i> Transaction History
+                </h3>
+                <div class="space-y-2.5" id="transactionsList"></div>
+            </div>
+
+            <!-- ================= TAB 6: PROFILE ================= -->
+            <div id="tab-profile" class="tab-content">
+                <h3 class="text-base font-bold text-slate-200 mb-3 flex items-center">
+                    <i class="fa-solid fa-user-gear text-gold mr-2"></i> Account Profile
+                </h3>
+                <div class="glass-card p-5 rounded-2xl mb-4 text-center border border-gold/30">
+                    <div class="relative w-20 h-20 mx-auto mb-3">
+                        <img id="profileAvatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200" class="w-20 h-20 rounded-full object-cover border-2 border-gold shadow-lg">
+                    </div>
+                    <h4 class="font-bold text-base text-slate-100" id="profileNameDisplay">Mush Tech</h4>
+                    <p class="text-xs text-gold-light mt-0.5" id="profilePhoneDisplay">0700000000</p>
+                </div>
+
+                <div class="glass-card p-4 rounded-2xl space-y-3">
+                       <h4 class="font-bold text-xs text-gold-light uppercase tracking-wider mb-1">Edit Profile Details</h4>
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">Username</label>
+                        <input type="text" id="inputName" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">Phone Number</label>
+                        <input type="text" id="inputPhone" maxlength="10" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] text-slate-400 mb-1">Choose Profile Picture from Device Storage</label>
+                        <input type="file" id="inputFileUpload" accept="image/*" onchange="handleImageUpload(event)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-300 file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-gold file:text-slate-950 hover:file:bg-gold-light cursor-pointer">
+                    </div>
+                    <button onclick="saveProfile()" class="w-full gold-gradient text-slate-950 font-bold py-2 rounded-xl text-xs mt-2 shadow-md">Save Changes</button>
+                    <button onclick="logout()" class="w-full bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/30 font-bold py-2 rounded-xl text-xs mt-2">Log Out</button>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Bottom Navigation Bar -->
+        <nav class="fixed bottom-0 left-0 right-0 z-40 bg-darkBg/95 backdrop-blur-md border-t border-slate-800 py-2 px-3">
+            <div class="max-w-md mx-auto flex justify-around items-center">
+                <button onclick="switchTab('home')" class="nav-btn flex flex-col items-center text-gold transition" data-tab="home">
+                    <i class="fa-solid fa-house text-base"></i>
+                    <span class="text-[10px] mt-1 font-semibold">Home</span>
+                </button>
+                <button onclick="switchTab('products')" class="nav-btn flex flex-col items-center text-slate-400 hover:text-gold transition" data-tab="products">
+                    <i class="fa-solid fa-spray-can text-base"></i>
+                    <span class="text-[10px] mt-1 font-semibold">Products</span>
+                </button>
+                <button onclick="switchTab('team')" class="nav-btn flex flex-col items-center text-slate-400 hover:text-gold transition" data-tab="team">
+                    <i class="fa-solid fa-users text-base"></i>
+                    <span class="text-[10px] mt-1 font-semibold">Team</span>
+                </button>
+                <button onclick="switchTab('my-products')" class="nav-btn flex flex-col items-center text-slate-400 hover:text-gold transition" data-tab="my-products">
+                    <i class="fa-solid fa-box-archive text-base"></i>
+                    <span class="text-[10px] mt-1 font-semibold">My Items</span>
+                </button>
+                <button onclick="switchTab('transactions')" class="nav-btn flex flex-col items-center text-slate-400 hover:text-gold transition" data-tab="transactions">
+                    <i class="fa-solid fa-receipt text-base"></i>
+                    <span class="text-[10px] mt-1 font-semibold">Trans.</span>
+                </button>
+                <button onclick="switchTab('profile')" class="nav-btn flex flex-col items-center text-slate-400 hover:text-gold transition" data-tab="profile">
+                    <i class="fa-solid fa-user text-base"></i>
+                    <span class="text-[10px] mt-1 font-semibold">Profile</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div id="depositModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-sm w-full p-5 rounded-2xl border border-gold/30">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-bold text-base text-gold-light"><i class="fa-solid fa-wallet mr-2"></i> Deposit Funds</h3>
+                <button onclick="closeModal('depositModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+            </div>
+            <p class="text-xs text-slate-300 mb-3">Minimum deposit amount is <strong class="text-gold">15,000 UGX</strong>.</p>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Enter Amount (UGX)</label>
+                    <input type="number" id="depositAmountInput" placeholder="15000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Payment Method</label>
+                    <select class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                        <option>MTN Mobile Money Uganda</option>
+                        <option>Airtel Money Uganda</option>
+                    </select>
+                </div>
+                <button onclick="processDeposit()" class="w-full gold-gradient text-slate-950 font-bold py-2.5 rounded-lg text-xs mt-1 shadow-md">Confirm Deposit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Withdraw Modal -->
+    <div id="withdrawModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-sm w-full p-5 rounded-2xl border border-gold/30">
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-bold text-base text-gold-light"><i class="fa-solid fa-money-bill-transfer mr-2"></i> Withdraw Funds</h3>
+                <button onclick="closeModal('withdrawModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+            </div>
+            <p class="text-xs text-slate-300 mb-3">Minimum withdrawal amount is <strong class="text-gold">5,000 UGX</strong>.</p>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Amount to Withdraw (UGX)</label>
+                    <input type="number" id="withdrawAmountInput" placeholder="5000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                </div>
+                <div>
+                    <label class="block text-[11px] text-slate-400 mb-1">Phone Number (Must start with 07)</label>
+                    <input type="text" id="withdrawPhoneInput" maxlength="10" placeholder="07XXXXXXXX" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                </div>
+                <button onclick="processWithdraw()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg text-xs mt-1 shadow-lg">Submit Withdrawal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        const perfumes = [
+            { id: 1, name: "Extrait de Parfum", price: 15000, daily: 1500, total: 45000, days: 30, maxLimit: 1, img: "https://m.media-amazon.com/images/I/71iwyz24+PL._SX569_.jpg" },
+            { id: 2, name: "Eau de Parfum (EDP)", price: 30000, daily: 3000, total: 90000, days: 30, maxLimit: 3, img: "http://www.florislondon.com/cdn/shop/files/Honey_Oud_EDP_100ml_Bottle.png?v=1743678628" },
+            { id: 3, name: "Eau de Toilette (EDT)", price: 50000, daily: 5000, total: 150000, days: 30, maxLimit: 3, img: "http://glassplanetindia.com/cdn/shop/files/8mlPerfumeSprayGlassBottlewithBlackMistPump.jpg?v=1718024642" },
+            { id: 4, name: "Eau de Cologne (EDC)", price: 80000, daily: 8000, total: 240000, days: 30, maxLimit: 3, img: "http://www.parfumdo.com/44261-large_default/original-eau-de-cologne-flacon.jpg" },
+            { id: 5, name: "Eau Fraîche & Mist", price: 100000, daily: 10000, total: 300000, days: 30, maxLimit: 3, img: "https://i5.walmartimages.com/seo/Parfums-Belcam-Chance-Eau-Fraiche-Body-Sprays-for-Women-8-Oz_e7a5378d-eece-4761-824b-f33e06e95e50.cf81e04b09ff75a2551eba3d8c26fa1a.jpeg" },
+            { id: 6, name: "Floral Bouquet Essence", price: 150000, daily: 15000, total: 450000, days: 30, maxLimit: 3, img: "http://regimedesfleurs.com/cdn/shop/files/LittleFLower-A.png?v=1757092496" },
+            { id: 7, name: "Amber & Oriental Luxe", price: 200000, daily: 20000, total: 600000, days: 30, maxLimit: 3, img: "http://ameenah.sa/cdn/shop/files/coll-oriental_PACK-AMBER_0006.1_R-1.jpg?v=1740471715" },
+            { id: 8, name: "Woody & Royal Oud", price: 300000, daily: 30000, total: 900000, days: 30, maxLimit: 3, img: "https://ug.jumia.is/unsafe/fit-in/500x500/filters:fill(white)/product/04/7847952/1.jpg?2791" },
+            { id: 9, name: "Citrus & Fresh Breeze", price: 500000, daily: 50000, total: 1500000, days: 30, maxLimit: 3, img: "https://i.ebayimg.com/images/g/tvIAAOSwC8ZnwFbi/s-l400.jpg" },
+            { id: 10, name: "Velvet Musk Reserve", price: 800000, daily: 80000, total: 2400000, days: 30, maxLimit: 3, img: "https://m.media-amazon.com/images/I/71iwyz24+PL._SX569_.jpg" },
+            { id: 11, name: "Grand Diamond Elixir", price: 1000000, daily: 100000, total: 3000000, days: 30, maxLimit: 3, img: "http://www.florislondon.com/cdn/shop/files/Honey_Oud_EDP_100ml_Bottle.png?v=1743678628" }
+        ];
+
+        let state = {
+            balance: 3000,
+            totalInvested: 0,
+            totalEarned: 0,
+            investments: [],
+            teamMembers: [],
+            referrerName: "",
+            hasMadeFirstPurchase: false,
+            transactions: [
+                { type: 'bonus', title: 'Welcome Bonus', amount: 3000, status: 'Completed', date: 'Today' }
+            ],
+            userProfile: {
+                name: 'Mush Tech',
+                phone: '0700000000',
+                photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200'
+            }
+        };
+
+        function fmt(num) { return num.toLocaleString(); }
+
+        function isValidUgandaPhone(phone) {
+            return /^07\d{8}$/.test(phone);
+        }
+
+        function isAlphanumeric(str) {
+            return /[a-zA-Z]/.test(str) && /\d/.test(str);
+        }
+
+        function switchAuthView(viewId) {
+            document.querySelectorAll('.auth-view').forEach(el => el.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
+        }
+
+        function handleLogin() {
+            const phone = document.getElementById('loginPhone').value.trim();
+            const pass = document.getElementById('loginPassword').value.trim();
+
+            if (!isValidUgandaPhone(phone)) {
+                alert("Phone number must strictly start with '07' and be exactly 10 digits long.");
+                return;
+            }
+            if (!pass) {
+                alert("Please enter your password.");
+                return;
+            }
+
+            state.userProfile.phone = phone;
+            document.getElementById('authWrapper').classList.add('hidden');
+            document.getElementById('mainAppWrapper').classList.remove('hidden');
+            updateUI();
+        }
+
+        function handleRegister() {
+            const username = document.getElementById('regUsername').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+            const refUsername = document.getElementById('regRef').value.trim();
+
+            if (!username) {
+                alert("Please enter a valid username.");
+                return;
+            }
+            if (!isValidUgandaPhone(phone)) {
+                alert("Phone number must strictly start with '07' and be exactly 10 digits long.");
+                return;
+            }
+            if (!isAlphanumeric(password)) {
+                alert("Password must be alphanumeric (contain both letters and numbers, e.g., Pass1234).");
+                return;
+            }
+            if (password !== confirmPassword) {
+                alert("Passwords do not match!");
+                return;
+            }
+
+            state.userProfile.name = username;
+            state.userProfile.phone = phone;
+            state.balance = 3000;
+            state.referrerName = refUsername;
+            state.hasMadeFirstPurchase = false;
+
+            if (refUsername) {
+                state.teamMembers.push({
+                    name: username,
+                    phone: phone,
+                    date: 'Just now',
+                    referrer: refUsername,
+                    status: 'Registered'
+                });
+            }
+
+            document.getElementById('authWrapper').classList.add('hidden');
+            document.getElementById('mainAppWrapper').classList.remove('hidden');
+            updateUI();
+            alert(`Account created successfully! 3,000 UGX Welcome Bonus added to your account.`);
+        }
+
+        function requestResetCode() {
+            const phone = document.getElementById('forgotPhone').value.trim();
+            if (!isValidUgandaPhone(phone)) {
+                alert("Phone number must strictly start with '07' and be exactly 10 digits long.");
+                return;
+            }
+
+            const codeSec = document.getElementById('resetCodeSection');
+            if (codeSec.classList.contains('hidden')) {
+                codeSec.classList.remove('hidden');
+                document.getElementById('forgotBtn').innerText = "Reset Password";
+                alert(`A 4-digit verification code has been sent to ${phone}.`);
+            } else {
+                const code = document.getElementById('resetCodeInput').value.trim();
+                const newPass = document.getElementById('newPasswordInput').value;
+
+                if (!code || code.length !== 4) {
+                    alert("Please enter the 4-digit verification code.");
+                    return;
+                }
+                if (!isAlphanumeric(newPass)) {
+                    alert("New password must be alphanumeric (contain both letters and numbers).");
+                    return;
+                }
+
+                alert("Password reset successful! Please log in with your new password.");
+                switchAuthView('authLogin');
+                codeSec.classList.add('hidden');
+                document.getElementById('forgotBtn').innerText = "Send Reset Code";
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-gold');
+                btn.classList.add('text-slate-400');
+                if(btn.getAttribute('data-tab') === tabId) {
+                    btn.classList.remove('text-slate-400');
+                    btn.classList.add('text-gold');
+                }
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function renderPerfumes() {
+            const grid = document.getElementById('perfumeGrid');
+            grid.innerHTML = perfumes.map(p => {
+                const activeCount = state.investments.filter(inv => inv.id === p.id && inv.daysLeft > 0).length;
+                const isLimitReached = activeCount >= p.maxLimit;
+
+                let btnText = `Invest Now (${activeCount}/${p.maxLimit})`;
+                let btnClass = "gold-gradient hover:opacity-90 text-slate-950";
+                if (isLimitReached) {
+                    btnText = "Max Limit Reached (Active/Cycle Ongoing)";
+                    btnClass = "bg-slate-800 text-slate-400 cursor-not-allowed";
+                }
+
+                return `
+                    <div class="glass-card rounded-2xl overflow-hidden flex flex-col justify-between border border-slate-700/60 hover:border-gold/50 transition duration-300">
+                        <div class="relative h-40 bg-slate-900/50 flex items-center justify-center p-3 overflow-hidden">
+                            <img src="${p.img}" alt="${p.name}" class="h-full object-contain transform hover:scale-105 transition duration-500">
+                            <span class="absolute top-2.5 right-2.5 bg-gold/90 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-full shadow">
+                                Max Limit: ${p.maxLimit}
+                            </span>
+                        </div>
+                        <div class="p-3.5 flex flex-col flex-grow justify-between">
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-100">${p.name}</h4>
+                                <div class="grid grid-cols-2 gap-2 mt-2 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800">
+                                    <div>
+                                        <span class="text-[9px] text-slate-400 block uppercase font-semibold">Price</span>
+                                        <span class="text-xs font-bold text-gold-light">${fmt(p.price)} UGX</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-[9px] text-slate-400 block uppercase font-semibold">Daily Payout</span>
+                                        <span class="text-xs font-bold text-emerald-400">+${fmt(p.daily)} UGX</span>
+                                    </div>
+                                    <div class="col-span-2 pt-1.5 border-t border-slate-800 flex justify-between items-center">
+                                        <span class="text-[9px] text-slate-400">Total Return (${p.days} Days):</span>
+                                        <span class="text-xs font-extrabold text-gold">${fmt(p.total)} UGX</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="buyPerfume(${p.id})" ${isLimitReached ? 'disabled' : ''} class="mt-3.5 w-full ${btnClass} font-bold py-2 rounded-xl text-xs transition transform active:scale-95 shadow-md">
+                                <i class="fa-solid fa-cart-shopping mr-1"></i> ${btnText}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function buyPerfume(id) {
+            const perfume = perfumes.find(p => p.id === id);
+            
+            const activeCount = state.investments.filter(inv => inv.id === perfume.id && inv.daysLeft > 0).length;
+            if (activeCount >= perfume.maxLimit) {
+                alert(`You have reached the maximum active purchase limit (${perfume.maxLimit}) for ${perfume.name}. You can purchase it again once its cycle ends.`);
+                return;
+            }
+
+            if (state.balance < perfume.price) {
+                alert(`Insufficient balance! You need ${fmt(perfume.price)} UGX. Please deposit funds first.`);
+                openModal('depositModal');
+                      return;
+            }
+
+            state.balance -= perfume.price;
+            state.totalInvested += perfume.price;
+            
+            const nextPayoutTime = Date.now() + (24 * 60 * 60 * 1000);
+
+            state.investments.push({
+                ...perfume,
+                purchaseDate: new Date().toLocaleDateString(),
+                nextPayout: nextPayoutTime,
+                daysLeft: perfume.days
+            });
+
+            state.transactions.unshift({
+                type: 'investment',
+                title: `Invested in ${perfume.name}`,
+                amount: perfume.price,
+                status: 'Completed',
+                date: 'Just now'
+            });
+
+            if (state.referrerName && !state.hasMadeFirstPurchase) {
+                const commission = perfume.price * 0.10;
+                state.hasMadeFirstPurchase = true;
+                alert(`First purchase successful! Your referrer (${state.referrerName}) received an instant 10% commission (${fmt(commission)} UGX).`);
+            } else {
+                alert(`Successfully purchased "${perfume.name}" for ${fmt(perfume.price)} UGX! Daily payout timer started.`);
+            }
+
+            updateUI();
+            renderPerfumes();
+            switchTab('my-products');
+        }
+
+        // Live Timer Loop
+        setInterval(() => {
+            const now = Date.now();
+            let stateUpdated = false;
+
+            state.investments.forEach(inv => {
+                if (inv.daysLeft > 0 && now >= inv.nextPayout) {
+                    state.balance += inv.daily;
+                    state.totalEarned += inv.daily;
+                    inv.daysLeft -= 1;
+                    inv.nextPayout = now + (24 * 60 * 60 * 1000);
+
+                    state.transactions.unshift({
+                        type: 'payout',
+                        title: `Daily Payout (${inv.name})`,
+                        amount: inv.daily,
+                        status: 'Completed',
+                        date: 'Just now'
+                    });
+                    stateUpdated = true;
+                }
+            });
+
+            if (stateUpdated) {
+                updateUI();
+                renderPerfumes();
+            } else {
+                updateTimersOnly();
+            }
+        }, 1000);
+
+        function updateTimersOnly() {
+            const now = Date.now();
+            state.investments.forEach((inv, index) => {
+                const timerEl = document.getElementById(`timer-${index}`);
+                if (timerEl) {
+                    const diff = inv.nextPayout - now;
+                    if (diff <= 0) {
+                        timerEl.innerText = "Processing payout...";
+                    } else {
+                        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                        timerEl.innerText = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    }
+                }
+            });
+        }
+
+        function updateUI() {
+            document.getElementById('userBalance').innerText = fmt(state.balance);
+            document.getElementById('totalInvested').innerText = fmt(state.totalInvested) + " UGX";
+            document.getElementById('totalEarned').innerText = fmt(state.totalEarned) + " UGX";
+
+            document.getElementById('teamCount').innerText = state.teamMembers.length;
+            document.getElementById('refLink').innerText = `https://aromalux.ug/ref/${state.userProfile.name.toLowerCase().replace(/\s+/g, '_')}`;
+            
+            const teamListEl = document.getElementById('teamList');
+            if(state.teamMembers.length === 0) {
+                teamListEl.innerHTML = `
+                    <div class="glass-card p-4 rounded-xl text-center text-slate-400 text-xs">
+                        <i class="fa-solid fa-user-group text-xl mb-1.5 text-slate-600 block"></i>
+                        No team members yet. Share your referral link to start building your team!
+                    </div>
+                `;
+            } else {
+                teamListEl.innerHTML = state.teamMembers.map(m => `
+                    <div class="glass-card p-3 rounded-xl flex justify-between items-center border border-slate-700/50">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center text-gold font-bold text-xs"><i class="fa-solid fa-user"></i></div>
+                            <div>
+                                <p class="font-bold text-xs text-slate-200">${m.name}</p>
+                                <p class="text-[10px] text-gold-light font-semibold"><i class="fa-solid fa-phone mr-1"></i>${m.phone}</p>
+                                <span class="text-[9px] text-slate-400">Joined: ${m.date}</span>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">Active Member</span>
+                    </div>
+                `).join('');
+            }
+
+            document.getElementById('profileNameDisplay').innerText = state.userProfile.name;
+            document.getElementById('profilePhoneDisplay').innerText = state.userProfile.phone;
+            document.getElementById('profileAvatar').src = state.userProfile.photo;
+            document.getElementById('inputName').value = state.userProfile.name;
+            document.getElementById('inputPhone').value = state.userProfile.phone;
+
+            const list = document.getElementById('activeInvestmentsList');
+            if (state.investments.length === 0) {
+                list.innerHTML = `
+                    <div class="glass-card p-5 rounded-xl text-center text-slate-400 text-xs">
+                        <i class="fa-solid fa-box-open text-2xl mb-2 text-slate-600 block"></i>
+                        No active perfume packages yet. Go to Products to invest!
+                    </div>
+                `;
+            } else {
+                const now = Date.now();
+                list.innerHTML = state.investments.map((inv, idx) => {
+                    const diff = inv.nextPayout - now;
+                    const hours = diff > 0 ? Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)) : 0;
+                    const minutes = diff > 0 ? Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)) : 0;
+                    const seconds = diff > 0 ? Math.floor((diff % (1000 * 60)) / 1000) : 0;
+                    const timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    const statusText = inv.daysLeft > 0 ? `${inv.daysLeft} Days Left` : `<span class="text-emerald-400 font-bold">Cycle Completed (Renewable)</span>`;
+
+                    return `
+                        <div class="glass-card p-4 rounded-xl border border-gold/30">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center space-x-3">
+                                    <img src="${inv.img}" class="w-10 h-10 object-contain bg-slate-900 rounded-lg p-1">
+                                    <div>
+                                        <h5 class="font-bold text-xs text-slate-200">${inv.name}</h5>
+                                        <p class="text-[10px] text-slate-400">Purchased: ${inv.purchaseDate}</p>
+                                    </div>
+                                </div>
+                                <span class="text-[10px] bg-gold/10 text-gold border border-gold/30 px-2 py-0.5 rounded-full font-bold">${statusText}</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-800 text-[11px]">
+                                <div><span class="text-slate-400">Daily Payout:</span> <strong class="text-emerald-400">+${fmt(inv.daily)} UGX</strong></div>
+                                <div><span class="text-slate-400">Next Payout In:</span> <strong class="text-gold font-mono" id="timer-${idx}">${timeStr}</strong></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            const tList = document.getElementById('transactionsList');
+            tList.innerHTML = state.transactions.map(tx => {
+                let icon = 'fa-arrow-down text-emerald-400 bg-emerald-500/20';
+                if(tx.type === 'withdrawal') icon = 'fa-arrow-up text-amber-400 bg-amber-500/20';
+                if(tx.type === 'investment') icon = 'fa-cart-shopping text-blue-400 bg-blue-500/20';
+                if(tx.type === 'payout') icon = 'fa-coins text-emerald-400 bg-emerald-500/20';
+                
+                return `
+                    <div class="glass-card p-3 rounded-xl flex justify-between items-center">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 rounded-full ${icon} flex items-center justify-center text-xs"><i class="fa-solid ${icon.split(' ')[0]}"></i></div>
+                            <div>
+                                <p class="font-bold text-xs text-slate-200">${tx.title}</p>
+                                <span class="text-[10px] text-slate-400">${tx.status} • ${tx.date}</span>
+                            </div>
+                        </div>
+                        <span class="text-xs font-bold text-emerald-400">+${fmt(tx.amount)} UGX</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    state.userProfile.photo = e.target.result;
+                    document.getElementById('profileAvatar').src = e.target.result;
+                    alert("Profile picture loaded successfully from device storage!");
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function openModal(modalId) { document.getElementById(modalId).classList.remove('hidden'); }
+        function closeModal(modalId) { document.getElementById(modalId).classList.add('hidden'); }
+
+        function processDeposit() {
+            const amt = parseInt(document.getElementById('depositAmountInput').value);
+            if (isNaN(amt) || amt < 15000) {
+                alert("Minimum deposit amount is 15,000 UGX.");
+                return;
+            }
+            state.balance += amt;
+            state.transactions.unshift({ type: 'deposit', title: 'Mobile Money Deposit', amount: amt, status: 'Completed', date: 'Just now' });
+            updateUI();
+            closeModal('depositModal');
+            document.getElementById('depositAmountInput').value = '';
+            alert(`Successfully deposited ${fmt(amt)} UGX!`);
+        }
+
+        function processWithdraw() {
+            const amt = parseInt(document.getElementById('withdrawAmountInput').value);
+            const phone = document.getElementById('withdrawPhoneInput').value.trim();
+
+            if (!isValidUgandaPhone(phone)) {
+                alert("Withdrawal phone number must strictly start with '07' and be exactly 10 digits long.");
+                return;
+            }
+            if (isNaN(amt) || amt < 5000) {
+                alert("Minimum withdrawal amount is 5,000 UGX.");
+                return;
+            }
+            if (amt > state.balance) {
+                alert("Insufficient account balance.");
+                return;
+            }
+
+            state.balance -= amt;
+            state.transactions.unshift({ type: 'withdrawal', title: 'Mobile Money Withdrawal', amount: amt, status: 'Pending', date: 'Just now' });
+            updateUI();
+            closeModal('withdrawModal');
+            document.getElementById('withdrawAmountInput').value = '';
+            alert(`Withdrawal request of ${fmt(amt)} UGX submitted successfully!`);
+        }
+
+        function saveProfile() {
+            const name = document.getElementById('inputName').value.trim();
+            const phone = document.getElementById('inputPhone').value.trim();
+
+            if(!isValidUgandaPhone(phone)) {
+                alert("Phone number must strictly start with '07' and be 10 digits long.");
+                return;
+            }
+
+            state.userProfile.name = name;
+            state.userProfile.phone = phone;
+            updateUI();
+            alert("Profile updated successfully!");
+        }
+
+        function copyRefLink() {
+            const refUrl = `https://aromalux.ug/ref/${state.userProfile.name.toLowerCase().replace(/\s+/g, '_')}`;
+            navigator.clipboard.writeText(refUrl);
+            alert("Referral link copied to clipboard!");
+        }
+
+        function logout() {
+            if(confirm("Are you sure you want to log out?")) {
+                document.getElementById('authWrapper').classList.remove('hidden');
+                document.getElementById('mainAppWrapper').classList.add('hidden');
+                switchAuthView('authLogin');
+            }
+        }
+
+        window.onload = () => {
+            renderPerfumes();
+        };
+    </script>
+</body>
+</html>
