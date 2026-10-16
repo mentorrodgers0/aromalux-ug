@@ -891,12 +891,7 @@ function copyRefLink() {
             updateUI();
             alert("Profile updated successfully!");
         }
-
-        function copyRefLink() {
-            const refUrl = `https://aromalux.ug/ref/${state.userProfile.name.toLowerCase().replace(/\s+/g, '_')}`;
-            navigator.clipboard.writeText(refUrl);
-            alert("Referral link copied to clipboard!");
-        }
+ 
 
         function logout() {
             if(confirm("Are you sure you want to log out?")) {
