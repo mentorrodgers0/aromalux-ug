@@ -225,28 +225,28 @@
             </div>
 
             <!-- ================= TAB 3: TEAM ================= -->
-            <div id="tab-team" class="tab-content">
-                <h3 class="text-base font-bold text-slate-200 mb-3 flex items-center">
-                    <i class="fa-solid fa-users text-gold mr-2"></i> My Referral Team
-                </h3>
-                <div class="glass-card p-4 rounded-2xl mb-4 text-center">
-                    <span class="text-xs text-slate-400 block">Total Team Members</span>
-                    <span class="text-3xl font-extrabold text-gold mt-1 block" id="teamCount">0</span>
-                    <p class="text-[11px] text-slate-300 mt-2">Earn an instant <strong>10% cash bonus</strong> automatically added when a member makes their <strong>first product purchase</strong>!</p>
-                    <div class="mt-4 pt-3 border-t border-slate-700/60 flex items-center justify-between bg-slate-900/50 p-3 rounded-xl">
-                        <span class="text-xs text-slate-300 truncate mr-2" id="refLink">https://aromalux.ug/ref/user</span>
-                        <button onclick="copyRefLink()" class="bg-gold text-slate-950 font-bold px-3 py-1 rounded-lg text-xs shrink-0">Copy Link</button>
-                    </div>
-                </div>
+<div id="tab-team" class="tab-content">
+    <h3 class="text-base font-bold text-slate-200 mb-3 flex items-center">
+        <i class="fa-solid fa-users text-gold mr-2"></i> My Referral Team
+    </h3>
+    <div class="glass-card p-4 rounded-2xl mb-4 text-center">
+        <span class="text-xs text-slate-400 block">Total Team Members</span>
+        <span class="text-3xl font-extrabold text-gold mt-1 block" id="teamCount">0</span>
+        <p class="text-[11px] text-slate-300 mt-2">Earn an instant <strong>10% cash bonus</strong> automatically added when a member makes their <strong>first product purchase</strong>!</p>
+        <div class="mt-4 pt-3 border-t border-slate-700/60 flex items-center justify-between bg-slate-900/50 p-3 rounded-xl">
+            <span class="text-xs text-slate-300 truncate mr-2" id="refLink">https://aromalux-ug.vercel.app/ref/user</span>
+            <button onclick="copyRefLink()" class="bg-gold text-slate-950 font-bold px-3 py-1 rounded-lg text-xs shrink-0">Copy Link</button>
+        </div>
+    </div>
 
-                <h4 class="font-bold text-sm text-slate-200 mb-2">Invited Team Members & Details</h4>
-                <div class="space-y-2.5" id="teamList">
-                    <div class="glass-card p-4 rounded-xl text-center text-slate-400 text-xs">
-                        <i class="fa-solid fa-user-group text-xl mb-1.5 text-slate-600 block"></i>
-                        No team members yet. Share your referral link to start building your team!
-                    </div>
-                </div>
-            </div>
+    <h4 class="font-bold text-sm text-slate-200 mb-2">Invited Team Members & Details</h4>
+    <div class="space-y-2.5" id="teamList">
+        <div class="glass-card p-4 rounded-xl text-center text-slate-400 text-xs">
+            <i class="fa-solid fa-user-group text-xl mb-1.5 text-slate-600 block"></i>
+            No team members yet. Share your referral link to start building your team!
+        </div>
+    </div>
+</div>
 
             <!-- ================= TAB 4: MY PRODUCTS ================= -->
             <div id="tab-my-products" class="tab-content">
@@ -409,13 +409,49 @@
                 { type: 'bonus', title: 'Welcome Bonus', amount: 3000, status: 'Completed', date: 'Today' }
             ],
             userProfile: {
-                name: 'Mush Tech',
+                name: 'e.g joshua',
                 phone: '0700000000',
                 photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200'
             }
         };
 
         function fmt(num) { return num.toLocaleString(); }
+          // Function to update the referral link dynamically for the logged-in user
+function loadUserReferralLink() {
+    // Uses the logged-in user's name/phone from the state object
+    const username = (state.userProfile && state.userProfile.name) ? state.userProfile.name : "user"; 
+    
+    // Construct the live Vercel URL
+    const liveUrl = `https://aromalux-ug.vercel.app/ref/${username}`;
+    
+    // Set the link in your Tab 3 element
+    const refElement = document.getElementById("refLink");
+    if (refElement) {
+        refElement.innerText = liveUrl;
+    }
+}
+
+// Clipboard Copy Function for the "Copy Link" button
+function copyRefLink() {
+    const refText = document.getElementById("refLink").innerText;
+    
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(refText).then(() => {
+            alert("Referral link copied to clipboard: " + refText);
+        }).catch(err => {
+            console.error("Failed to copy link: ", err);
+        });
+    } else {
+        // Fallback for older web browsers
+        const tempInput = document.createElement("input");
+        tempInput.value = refText;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempInput);
+        alert("Referral link copied to clipboard!");
+    }
+}
 
         function isValidUgandaPhone(phone) {
             return /^07\d{8}$/.test(phone);
@@ -694,7 +730,7 @@
 
             document.getElementById('teamCount').innerText = state.teamMembers.length;
             document.getElementById('refLink').innerText = `https://aromalux.ug/ref/${state.userProfile.name.toLowerCase().replace(/\s+/g, '_')}`;
-            
+            loadUserReferralLink();
             const teamListEl = document.getElementById('teamList');
             if(state.teamMembers.length === 0) {
                 teamListEl.innerHTML = `
