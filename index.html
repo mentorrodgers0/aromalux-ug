@@ -551,6 +551,12 @@ function copyRefLink() {
     userRef.once('value', (snapshot) => {
         if (snapshot.exists()) {
             const userData = snapshot.val();
+            
+            // Ensure arrays exist so .forEach never crashes
+            userData.investments = userData.investments || [];
+            userData.transactions = userData.transactions || [];
+            userData.teamMembers = userData.teamMembers || [];
+
             // Verify if the password matches the database record
             if (userData.password === pass) {
                 state = userData; // Sync online user state to the app
@@ -562,21 +568,12 @@ function copyRefLink() {
                 alert("Incorrect password. Please try again.");
             }
         } else {
-            alert("Account not found with this phone number. Please register first.");
+            alert("Account not found with this phone number.");
         }
     }).catch((error) => {
         alert("Login failed: " + error.message);
     });
 }
-// Function to sync current user state to Firebase Realtime Database
-function syncUserData() {
-    if (state && state.phone) {
-        db.ref('users/' + state.phone).set(state).catch((error) => {
-            console.error("Failed to sync data to Firebase:", error);
-        });
-    }
-}
-
 
         function handleRegister() {
     const username = document.getElementById('regUsername').value.trim();
@@ -631,9 +628,8 @@ function syncUserData() {
     }
 
     const codeSec = document.getElementById('resetCodeSection');
-    
-    // Check if the phone number exists in Firebase first
     const userRef = db.ref('users/' + phone);
+
     userRef.once('value', (snapshot) => {
         if (!snapshot.exists()) {
             alert("No account found with this phone number.");
@@ -641,7 +637,6 @@ function syncUserData() {
         }
 
         if (codeSec.classList.contains('hidden')) {
-            // Verify security math question (3 + 4 = 7)
             const secAnswer = document.getElementById('secAnswerInput').value.trim();
             if (secAnswer !== "7") {
                 alert("Incorrect security answer. Please solve '3 + 4' correctly.");
@@ -651,7 +646,6 @@ function syncUserData() {
             codeSec.classList.remove('hidden');
             document.getElementById('forgotBtn').innerText = "Reset Password";
             
-            // Generate a random 4-digit code dynamically for this session
             const generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
             window.currentResetCode = generatedCode;
 
@@ -664,19 +658,20 @@ function syncUserData() {
                 alert("Invalid 4-digit verification code. Please check the code shown on screen.");
                 return;
             }
-            if (!isAlphanumeric(newPass)) {
-                alert("New password must be alphanumeric (contain both letters and numbers).");
+
+            const hasLetter = /[a-zA-Z]/.test(newPass);
+            const hasNumber = /[0-9]/.test(newPass);
+            if (!newPass || newPass.length < 4 || !hasLetter || !hasNumber) {
+                alert("New password must be at least 4 characters and contain both letters and numbers.");
                 return;
             }
 
-            // Update the password in Firebase Realtime Database
             userRef.update({ password: newPass }).then(() => {
                 alert("Password reset successful! Please log in with your new password.");
                 switchAuthView('authLogin');
                 codeSec.classList.add('hidden');
                 document.getElementById('forgotBtn').innerText = "Send Reset Code";
                 
-                // Clear input fields
                 document.getElementById('forgotPhone').value = "";
                 document.getElementById('secAnswerInput').value = "";
                 document.getElementById('resetCodeInput').value = "";
@@ -687,7 +682,7 @@ function syncUserData() {
         }
     });
 }
- 
+
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-' + tabId).classList.add('active');
@@ -750,61 +745,91 @@ function syncUserData() {
                 `;
             }).join('');
         }
+        
+     function syncUserData() {
+    const phone = state.phone || (state.userProfile && state.userProfile.phone) || document.getElementById('loginPhone').value.trim();
+    
+    if (!phone) {
+        console.warn("Cannot sync user data: No phone number found.");
+        return;
+    }
+
+    const userRef = db.ref('users/' + phone);
+    userRef.update({
+        balance: state.balance || 0,
+        totalInvested: state.totalInvested || 0,
+        totalEarned: state.totalEarned || 0,
+        investments: state.investments || [],
+        transactions: state.transactions || [],
+        teamMembers: state.teamMembers || [],
+        hasMadeFirstPurchase: state.hasMadeFirstPurchase || false
+    }).then(() => {
+        console.log("User data successfully synced to Firebase!");
+    }).catch((error) => {
+        console.error("Failed to sync user data: ", error.message);
+    });
+}
 
         function buyPerfume(id) {
-            const perfume = perfumes.find(p => p.id === id);
-            
-            const activeCount = state.investments.filter(inv => inv.id === perfume.id && inv.daysLeft > 0).length;
-            if (activeCount >= perfume.maxLimit) {
-                alert(`You have reached the maximum active purchase limit (${perfume.maxLimit}) for ${perfume.name}. You can purchase it again once its cycle ends.`);
-                return;
-            }
+    const perfume = perfumes.find(p => p.id === id);
+    if (!perfume) return;
 
-            if (state.balance < perfume.price) {
-                alert(`Insufficient balance! You need ${fmt(perfume.price)} UGX. Please deposit funds first.`);
-                openModal('depositModal');
-                      return;
-            }
+    state.investments = state.investments || [];
+    const activeCount = state.investments.filter(inv => inv.id === perfume.id && inv.daysLeft > 0).length;
+    if (activeCount >= perfume.maxLimit) {
+        alert(`You have reached the maximum active purchase limit (${perfume.maxLimit}) for ${perfume.name}. You can purchase it again once its cycle ends.`);
+        return;
+    }
 
-            state.balance -= perfume.price;
-            state.totalInvested += perfume.price;
-            
-            const nextPayoutTime = Date.now() + (24 * 60 * 60 * 1000);
+    state.balance = state.balance || 0;
+    if (state.balance < perfume.price) {
+        alert(`Insufficient balance! You need ${fmt(perfume.price)} UGX. Please deposit funds first.`);
+        openModal('depositModal');
+        return;
+    }
 
-            state.investments.push({
-                ...perfume,
-                purchaseDate: new Date().toLocaleDateString(),
-                nextPayout: nextPayoutTime,
-                daysLeft: perfume.days
-            });
+    state.balance -= perfume.price;
+    state.totalInvested = (state.totalInvested || 0) + perfume.price;
+    
+    const nextPayoutTime = Date.now() + (24 * 60 * 60 * 1000);
 
-            state.transactions.unshift({
-                type: 'investment',
-                title: `Invested in ${perfume.name}`,
-                amount: perfume.price,
-                status: 'Completed',
-                date: 'Just now'
-            });
-             syncUserData();
-            if (state.referrerName && !state.hasMadeFirstPurchase) {
-                const commission = perfume.price * 0.10;
-                state.hasMadeFirstPurchase = true;
-                alert(`First purchase successful! Your referrer (${state.referrerName}) received an instant 10% commission (${fmt(commission)} UGX).`);
-            } else {
-                alert(`Successfully purchased "${perfume.name}" for ${fmt(perfume.price)} UGX! Daily payout timer started.`);
-            }
+    state.investments.push({
+        ...perfume,
+        purchaseDate: new Date().toLocaleDateString(),
+        nextPayout: nextPayoutTime,
+        daysLeft: perfume.days
+    });
 
-            updateUI();
-            renderPerfumes();
-            switchTab('my-products');
-        }
+    state.transactions = state.transactions || [];
+    state.transactions.unshift({
+        type: 'investment',
+        title: `Invested in ${perfume.name}`,
+        amount: perfume.price,
+        status: 'Completed',
+        date: 'Just now'
+    });
+
+    syncUserData();
+
+    if (state.referrerName && !state.hasMadeFirstPurchase) {
+        const commission = perfume.price * 0.10;
+        state.hasMadeFirstPurchase = true;
+        alert(`First purchase successful! Your referrer (${state.referrerName}) received an instant 10% commission (${fmt(commission)} UGX).`);
+    } else {
+        alert(`Successfully purchased "${perfume.name}" for ${fmt(perfume.price)} UGX! Daily payout timer started.`);
+    }
+
+    updateUI();
+    renderPerfumes();
+    switchTab('my-products');
+}
 
         // Live Timer Loop
         setInterval(() => {
             const now = Date.now();
             let stateUpdated = false;
 
-            state.investments.forEach(inv => {
+            (state.investments || []).forEach(inv => {
                 if (inv.daysLeft > 0 && now >= inv.nextPayout) {
                     state.balance += inv.daily;
                     state.totalEarned += inv.daily;
@@ -831,8 +856,8 @@ function syncUserData() {
         }, 1000);
 
         function updateTimersOnly() {
-            const now = Date.now();
-            state.investments.forEach((inv, index) => {
+    const now = Date.now();
+    (state.investments || []).forEach((inv, index) => {
                 const timerEl = document.getElementById(`timer-${index}`);
                 if (timerEl) {
                     const diff = inv.nextPayout - now;
@@ -848,13 +873,29 @@ function syncUserData() {
             });
         }
 
-        function updateUI() {
+                function updateUI() {
+            state.balance = state.balance || 0;
+            state.totalInvested = state.totalInvested || 0;
+            state.totalEarned = state.totalEarned || 0;
+            state.teamMembers = state.teamMembers || [];
+            state.investments = state.investments || [];
+            state.transactions = state.transactions || [];
+
             document.getElementById('userBalance').innerText = fmt(state.balance);
             document.getElementById('totalInvested').innerText = fmt(state.totalInvested) + " UGX";
             document.getElementById('totalEarned').innerText = fmt(state.totalEarned) + " UGX";
 
             document.getElementById('teamCount').innerText = state.teamMembers.length;
-            document.getElementById('refLink').innerText = `https://aromalux.ug/ref/${state.userProfile.name.toLowerCase().replace(/\s+/g, '_')}`;
+            
+            if (state.userProfile && state.userProfile.name) {
+                document.getElementById('refLink').innerText = `https://aromalux.ug/ref/${state.userProfile.name.toLowerCase().replace(/\s+/g, '_')}`;
+                document.getElementById('profileNameDisplay').innerText = state.userProfile.name;
+                document.getElementById('profilePhoneDisplay').innerText = state.userProfile.phone;
+                document.getElementById('profileAvatar').src = state.userProfile.photo;
+                document.getElementById('inputName').value = state.userProfile.name;
+                document.getElementById('inputPhone').value = state.userProfile.phone;
+            }
+            
             loadUserReferralLink();
             const teamListEl = document.getElementById('teamList');
             if(state.teamMembers.length === 0) {
@@ -879,12 +920,6 @@ function syncUserData() {
                     </div>
                 `).join('');
             }
-
-            document.getElementById('profileNameDisplay').innerText = state.userProfile.name;
-            document.getElementById('profilePhoneDisplay').innerText = state.userProfile.phone;
-            document.getElementById('profileAvatar').src = state.userProfile.photo;
-            document.getElementById('inputName').value = state.userProfile.name;
-            document.getElementById('inputPhone').value = state.userProfile.phone;
 
             const list = document.getElementById('activeInvestmentsList');
             if (state.investments.length === 0) {
@@ -946,7 +981,7 @@ function syncUserData() {
                 `;
             }).join('');
         }
-
+        
         function handleImageUpload(event) {
             const file = event.target.files[0];
             if (file) {
