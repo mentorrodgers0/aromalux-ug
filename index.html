@@ -18,9 +18,18 @@
                     }
                 }
             }
-        }
-    </script>
-    <style>
+                }
+    }
+</script>
+<!-- Firebase App (Core SDK) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<!-- Firebase Auth (For login, registration, and phone/password management) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<!-- Firebase Realtime Database (For saving balances, products, and team data online) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+    
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .glass-card { background: rgba(30, 41, 59, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(212, 175, 55, 0.2); }
@@ -101,6 +110,12 @@
                     <label class="block text-[11px] text-slate-400 mb-1">Phone Number</label>
                     <input type="text" id="forgotPhone" maxlength="10" placeholder="07XXXXXXXX" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-gold">
                 </div>
+                <!-- Security Verification Box -->
+<div class="my-3 p-3 bg-slate-800/50 rounded-xl border border-slate-700 space-y-2">
+    <label class="block text-[11px] text-slate-400">Security Check: What is 3 + 4?</label>
+    <input type="text" id="secAnswerInput" placeholder="Enter answer" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white text-sm">
+</div>
+
                 <div id="resetCodeSection" class="hidden space-y-3">
                     <div>
                         <label class="block text-[11px] text-slate-400 mb-1">Enter 4-Digit Code Sent to Phone</label>
@@ -383,6 +398,58 @@
 
     <!-- JavaScript Application Logic -->
     <script>
+    // Function to capture whichever referrer username is in the URL path
+function captureReferralFromURL() {
+    const path = window.location.pathname;
+    
+    if (path.includes('/ref/')) {
+        // Automatically splits and extracts whatever username is in the URL (e.g., 'joshua', 'sarah', etc.)
+        const refUser = path.split('/ref/')[1]; 
+        
+        if (refUser && refUser.trim() !== '') {
+            const cleanRef = decodeURIComponent(refUser.trim());
+            
+            // Save this specific inviter's name to browser memory
+            localStorage.setItem('aromalux_referrer', cleanRef);
+            
+            // Populate the registration input field automatically
+            autoFillRefInput(cleanRef);
+        }
+    } else {
+        // Fallback: check stored referrer from memory if they visit the root URL later
+        const savedRef = localStorage.getItem('aromalux_referrer');
+        if (savedRef) {
+            autoFillRefInput(savedRef);
+        }
+    }
+}
+
+// Helper to fill the Referral Username input field
+function autoFillRefInput(username) {
+    const refInput = document.getElementById('regRef') || document.getElementById('regRefUsername') || document.getElementById('refUsername');
+    if (refInput) {
+        refInput.value = username;
+        refInput.readOnly = true; // Locks the field so new user registers under their inviter
+    }
+}
+
+
+ // Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyDLK2Aq9yEgzw_h5mAEyD6l-ok6_uZqoGg",
+  authDomain: "aromalux-ug.firebaseapp.com",
+  databaseURL: "https://aromalux-ug-default-rtdb.firebaseio.com",
+  projectId: "aromalux-ug",
+  storageBucket: "aromalux-ug.firebasestorage.app",
+  messagingSenderId: "424031224412",
+  appId: "1:424031224412:web:2f2606d49bd52170769c99"
+};
+
+// Initialize Firebase (Compat SDK style)
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const auth = firebase.auth();
+
         const perfumes = [
             { id: 1, name: "Extrait de Parfum", price: 15000, daily: 1500, total: 45000, days: 30, maxLimit: 1, img: "https://m.media-amazon.com/images/I/71iwyz24+PL._SX569_.jpg" },
             { id: 2, name: "Eau de Parfum (EDP)", price: 30000, daily: 3000, total: 90000, days: 30, maxLimit: 3, img: "http://www.florislondon.com/cdn/shop/files/Honey_Oud_EDP_100ml_Bottle.png?v=1743678628" },
@@ -467,102 +534,160 @@ function copyRefLink() {
         }
 
         function handleLogin() {
-            const phone = document.getElementById('loginPhone').value.trim();
-            const pass = document.getElementById('loginPassword').value.trim();
+    const phone = document.getElementById('loginPhone').value.trim();
+    const pass = document.getElementById('loginPassword').value.trim();
 
-            if (!isValidUgandaPhone(phone)) {
-                alert("Phone number must strictly start with '07' and be exactly 10 digits long.");
-                return;
-            }
-            if (!pass) {
-                alert("Please enter your password.");
-                return;
-            }
+    if (!isValidUgandaPhone(phone)) {
+        alert("Phone number must strictly start with '07' and be exactly 10 digits long.");
+        return;
+    }
+    if (!pass) {
+        alert("Please enter your password.");
+        return;
+    }
 
-            state.userProfile.phone = phone;
-            document.getElementById('authWrapper').classList.add('hidden');
-            document.getElementById('mainAppWrapper').classList.remove('hidden');
-            updateUI();
+    // Check online database in Firebase for this phone number
+    const userRef = db.ref('users/' + phone);
+    userRef.once('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const userData = snapshot.val();
+            // Verify if the password matches the database record
+            if (userData.password === pass) {
+                state = userData; // Sync online user state to the app
+                document.getElementById('authWrapper').classList.add('hidden');
+                document.getElementById('mainAppWrapper').classList.remove('hidden');
+                updateUI();
+                alert("Login successful!");
+            } else {
+                alert("Incorrect password. Please try again.");
+            }
+        } else {
+            alert("Account not found with this phone number. Please register first.");
         }
+    }).catch((error) => {
+        alert("Login failed: " + error.message);
+    });
+}
+// Function to sync current user state to Firebase Realtime Database
+function syncUserData() {
+    if (state && state.phone) {
+        db.ref('users/' + state.phone).set(state).catch((error) => {
+            console.error("Failed to sync data to Firebase:", error);
+        });
+    }
+}
+
 
         function handleRegister() {
-            const username = document.getElementById('regUsername').value.trim();
-            const phone = document.getElementById('regPhone').value.trim();
-            const password = document.getElementById('regPassword').value;
-            const confirmPassword = document.getElementById('regConfirmPassword').value;
-            const refUsername = document.getElementById('regRef').value.trim();
+    const username = document.getElementById('regUsername').value.trim();
+    const phone = document.getElementById('regPhone').value.trim();
+    const password = document.getElementById('regPassword').value.trim();
+    const refUsername = document.getElementById('regRef').value || "";
 
-            if (!username) {
-                alert("Please enter a valid username.");
-                return;
-            }
-            if (!isValidUgandaPhone(phone)) {
-                alert("Phone number must strictly start with '07' and be exactly 10 digits long.");
-                return;
-            }
-            if (!isAlphanumeric(password)) {
-                alert("Password must be alphanumeric (contain both letters and numbers, e.g., Pass1234).");
-                return;
-            }
-            if (password !== confirmPassword) {
-                alert("Passwords do not match!");
-                return;
-            }
+    if (!username || !phone || !password) {
+        alert("Please fill in all required fields.");
+        return;
+    }
 
-            state.userProfile.name = username;
-            state.userProfile.phone = phone;
-            state.balance = 3000;
-            state.referrerName = refUsername;
-            state.hasMadeFirstPurchase = false;
+    const userRef = db.ref('users/' + phone);
 
-            if (refUsername) {
-                state.teamMembers.push({
-                    name: username,
-                    phone: phone,
-                    date: 'Just now',
-                    referrer: refUsername,
-                    status: 'Registered'
-                });
-            }
+    userRef.once('value', (snapshot) => {
+        if (snapshot.exists()) {
+            alert("An account with this phone number already exists!");
+        } else {
+            const newUser = {
+                username: username,
+                phone: phone,
+                password: password,
+                balance: 3000, // Welcome bonus
+                totalInvested: 0,
+                totalEarned: 0,
+                referrer: refUsername,
+                investments: [],
+                teamMembers: [],
+                transactions: [
+                    { type: 'bonus', title: 'Welcome Bonus', amount: 3000, date: new Date().toISOString() }
+                ]
+            };
 
-            document.getElementById('authWrapper').classList.add('hidden');
-            document.getElementById('mainAppWrapper').classList.remove('hidden');
-            updateUI();
-            alert(`Account created successfully! 3,000 UGX Welcome Bonus added to your account.`);
+            userRef.set(newUser).then(() => {
+                alert("Account created successfully online! 3,000 UGX Welcome Bonus added.");
+                state = newUser;
+                updateUI();
+                document.getElementById('authWrapper').classList.add('hidden');
+                document.getElementById('mainAppWrapper').classList.remove('hidden');
+            }).catch((error) => {
+                alert("Registration failed: " + error.message);
+            });
+        }
+    });
+}
+
+      function requestResetCode() {
+    const phone = document.getElementById('forgotPhone').value.trim();
+    if (!isValidUgandaPhone(phone)) {
+        alert("Phone number must strictly start with '07' and be exactly 10 digits long.");
+        return;
+    }
+
+    const codeSec = document.getElementById('resetCodeSection');
+    
+    // Check if the phone number exists in Firebase first
+    const userRef = db.ref('users/' + phone);
+    userRef.once('value', (snapshot) => {
+        if (!snapshot.exists()) {
+            alert("No account found with this phone number.");
+            return;
         }
 
-        function requestResetCode() {
-            const phone = document.getElementById('forgotPhone').value.trim();
-            if (!isValidUgandaPhone(phone)) {
-                alert("Phone number must strictly start with '07' and be exactly 10 digits long.");
+        if (codeSec.classList.contains('hidden')) {
+            // Verify security math question (3 + 4 = 7)
+            const secAnswer = document.getElementById('secAnswerInput').value.trim();
+            if (secAnswer !== "7") {
+                alert("Incorrect security answer. Please solve '3 + 4' correctly.");
                 return;
             }
 
-            const codeSec = document.getElementById('resetCodeSection');
-            if (codeSec.classList.contains('hidden')) {
-                codeSec.classList.remove('hidden');
-                document.getElementById('forgotBtn').innerText = "Reset Password";
-                alert(`A 4-digit verification code has been sent to ${phone}.`);
-            } else {
-                const code = document.getElementById('resetCodeInput').value.trim();
-                const newPass = document.getElementById('newPasswordInput').value;
+            codeSec.classList.remove('hidden');
+            document.getElementById('forgotBtn').innerText = "Reset Password";
+            
+            // Generate a random 4-digit code dynamically for this session
+            const generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
+            window.currentResetCode = generatedCode;
 
-                if (!code || code.length !== 4) {
-                    alert("Please enter the 4-digit verification code.");
-                    return;
-                }
-                if (!isAlphanumeric(newPass)) {
-                    alert("New password must be alphanumeric (contain both letters and numbers).");
-                    return;
-                }
+            alert(`Security Verified!\nYour 4-digit reset code is: ${generatedCode}`);
+        } else {
+            const code = document.getElementById('resetCodeInput').value.trim();
+            const newPass = document.getElementById('newPasswordInput').value;
 
+            if (code !== window.currentResetCode) {
+                alert("Invalid 4-digit verification code. Please check the code shown on screen.");
+                return;
+            }
+            if (!isAlphanumeric(newPass)) {
+                alert("New password must be alphanumeric (contain both letters and numbers).");
+                return;
+            }
+
+            // Update the password in Firebase Realtime Database
+            userRef.update({ password: newPass }).then(() => {
                 alert("Password reset successful! Please log in with your new password.");
                 switchAuthView('authLogin');
                 codeSec.classList.add('hidden');
                 document.getElementById('forgotBtn').innerText = "Send Reset Code";
-            }
+                
+                // Clear input fields
+                document.getElementById('forgotPhone').value = "";
+                document.getElementById('secAnswerInput').value = "";
+                document.getElementById('resetCodeInput').value = "";
+                document.getElementById('newPasswordInput').value = "";
+            }).catch((error) => {
+                alert("Failed to reset password: " + error.message);
+            });
         }
-
+    });
+}
+ 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-' + tabId).classList.add('active');
@@ -660,7 +785,7 @@ function copyRefLink() {
                 status: 'Completed',
                 date: 'Just now'
             });
-
+             syncUserData();
             if (state.referrerName && !state.hasMadeFirstPurchase) {
                 const commission = perfume.price * 0.10;
                 state.hasMadeFirstPurchase = true;
@@ -902,8 +1027,10 @@ function copyRefLink() {
         }
 
         window.onload = () => {
-            renderPerfumes();
-        };
+    captureReferralFromURL();
+    renderPerfumes();
+};
+
     </script>
 </body>
 </html>
