@@ -533,93 +533,114 @@ function copyRefLink() {
             document.getElementById(viewId).classList.add('active');
         }
 
-        function handleLogin() {
-    const phone = document.getElementById('loginPhone').value.trim();
-    const pass = document.getElementById('loginPassword').value.trim();
+                function handleLogin() {
+            const phone = document.getElementById('loginPhone').value.trim();
+            const pass = document.getElementById('loginPassword').value.trim();
 
-    if (!isValidUgandaPhone(phone)) {
-        alert("Phone number must strictly start with '07' and be exactly 10 digits long.");
-        return;
-    }
-    if (!pass) {
-        alert("Please enter your password.");
-        return;
-    }
-
-    // Check online database in Firebase for this phone number
-    const userRef = db.ref('users/' + phone);
-    userRef.once('value', (snapshot) => {
-        if (snapshot.exists()) {
-            const userData = snapshot.val();
-            
-            // Ensure arrays exist so .forEach never crashes
-            userData.investments = userData.investments || [];
-            userData.transactions = userData.transactions || [];
-            userData.teamMembers = userData.teamMembers || [];
-
-            // Verify if the password matches the database record
-            if (userData.password === pass) {
-                state = userData; // Sync online user state to the app
-                document.getElementById('authWrapper').classList.add('hidden');
-                document.getElementById('mainAppWrapper').classList.remove('hidden');
-                updateUI();
-                alert("Login successful!");
-            } else {
-                alert("Incorrect password. Please try again.");
+            if (!isValidUgandaPhone(phone)) {
+                alert("Phone number must strictly start with '07' and be exactly 10 digits long.");
+                return;
             }
-        } else {
-            alert("Account not found with this phone number.");
-        }
-    }).catch((error) => {
-        alert("Login failed: " + error.message);
-    });
-}
+            if (!pass) {
+                alert("Please enter your password.");
+                return;
+            }
 
-        function handleRegister() {
-    const username = document.getElementById('regUsername').value.trim();
-    const phone = document.getElementById('regPhone').value.trim();
-    const password = document.getElementById('regPassword').value.trim();
-    const refUsername = document.getElementById('regRef').value || "";
+            // Check online database in Firebase for this phone number
+            const userRef = db.ref('users/' + phone);
+            userRef.once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    
+                    // Ensure arrays and profiles exist so nothing ever crashes
+                    userData.investments = userData.investments || [];
+                    userData.transactions = userData.transactions || [];
+                    userData.teamMembers = userData.teamMembers || [];
+                    userData.userProfile = userData.userProfile || {
+                        name: userData.username || "User",
+                        phone: userData.phone || phone,
+                        photo: ""
+                    };
 
-    if (!username || !phone || !password) {
-        alert("Please fill in all required fields.");
-        return;
-    }
+                    // Verify if the password matches the database record
+                    if (userData.password === pass) {
+                        state = userData; // Sync online user state to the app
 
-    const userRef = db.ref('users/' + phone);
+                        // CATCH-UP OFFLINE PAYOUTS AUTOMATICALLY ON LOGIN
+                        if (typeof processOfflinePayouts === 'function') {
+                            processOfflinePayouts();
+                        }
 
-    userRef.once('value', (snapshot) => {
-        if (snapshot.exists()) {
-            alert("An account with this phone number already exists!");
-        } else {
-            const newUser = {
-                username: username,
-                phone: phone,
-                password: password,
-                balance: 3000, // Welcome bonus
-                totalInvested: 0,
-                totalEarned: 0,
-                referrer: refUsername,
-                investments: [],
-                teamMembers: [],
-                transactions: [
-                    { type: 'bonus', title: 'Welcome Bonus', amount: 3000, date: new Date().toISOString() }
-                ]
-            };
-
-            userRef.set(newUser).then(() => {
-                alert("Account created successfully online! 3,000 UGX Welcome Bonus added.");
-                state = newUser;
-                updateUI();
-                document.getElementById('authWrapper').classList.add('hidden');
-                document.getElementById('mainAppWrapper').classList.remove('hidden');
+                        document.getElementById('authWrapper').classList.add('hidden');
+                        document.getElementById('mainAppWrapper').classList.remove('hidden');
+                        updateUI();
+                        alert("Login successful!");
+                    } else {
+                        alert("Incorrect password. Please try again.");
+                    }
+                } else {
+                    alert("Account not found with this phone number.");
+                }
             }).catch((error) => {
-                alert("Registration failed: " + error.message);
+                alert("Login failed: " + error.message);
             });
         }
-    });
-}
 
+        function handleRegister() {
+            const username = document.getElementById('regUsername').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const password = document.getElementById('regPassword').value.trim();
+            const refUsername = document.getElementById('regRef').value || "";
+
+            if (!username || !phone || !password) {
+                alert("Please fill in all required fields.");
+                return;
+            }
+
+            if (!isValidUgandaPhone(phone)) {
+                alert("Phone number must strictly start with '07' and be exactly 10 digits long.");
+                return;
+            }
+
+            const userRef = db.ref('users/' + phone);
+
+            userRef.once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    alert("An account with this phone number already exists!");
+                } else {
+                    const newUser = {
+                        username: username,
+                        phone: phone,
+                        password: password,
+                        balance: 3000, // Welcome bonus
+                        totalInvested: 0,
+                        totalEarned: 0,
+                        referrer: refUsername,
+                        investments: [],
+                        teamMembers: [],
+                        userProfile: {
+                            name: username,
+                            phone: phone,
+                            photo: ""
+                        },
+                        transactions: [
+                            { type: 'bonus', title: 'Welcome Bonus', amount: 3000, status: 'Completed', date: new Date().toLocaleDateString() }
+                        ]
+                    };
+
+                    userRef.set(newUser).then(() => {
+                        alert("Account created successfully online! 3,000 UGX Welcome Bonus added.");
+                        state = newUser;
+                        updateUI();
+                        document.getElementById('authWrapper').classList.add('hidden');
+                        document.getElementById('mainAppWrapper').classList.remove('hidden');
+                    }).catch((error) => {
+                        alert("Registration failed: " + error.message);
+                    });
+                }
+            });
+        }
+        
       function requestResetCode() {
     const phone = document.getElementById('forgotPhone').value.trim();
     if (!isValidUgandaPhone(phone)) {
@@ -831,23 +852,29 @@ function copyRefLink() {
 
             (state.investments || []).forEach(inv => {
                 if (inv.daysLeft > 0 && now >= inv.nextPayout) {
-                    state.balance += inv.daily;
-                    state.totalEarned += inv.daily;
+                    state.balance = (state.balance || 0) + inv.daily;
+                    state.totalEarned = (state.totalEarned || 0) + inv.daily;
                     inv.daysLeft -= 1;
-                    inv.nextPayout = now + (24 * 60 * 60 * 1000);
+                    
+                    // Advance next payout by exactly 24 hours from scheduled target (prevents time drift)
+                    inv.nextPayout += (24 * 60 * 60 * 1000);
 
+                    state.transactions = state.transactions || [];
                     state.transactions.unshift({
                         type: 'payout',
                         title: `Daily Payout (${inv.name})`,
                         amount: inv.daily,
                         status: 'Completed',
-                        date: 'Just now'
+                        date: new Date().toLocaleDateString()
                     });
                     stateUpdated = true;
                 }
             });
 
             if (stateUpdated) {
+                // CRITICAL: Immediately persist accumulated live payouts to Firebase
+                syncUserData();
+                
                 updateUI();
                 renderPerfumes();
             } else {
@@ -856,8 +883,8 @@ function copyRefLink() {
         }, 1000);
 
         function updateTimersOnly() {
-    const now = Date.now();
-    (state.investments || []).forEach((inv, index) => {
+            const now = Date.now();
+            (state.investments || []).forEach((inv, index) => {
                 const timerEl = document.getElementById(`timer-${index}`);
                 if (timerEl) {
                     const diff = inv.nextPayout - now;
@@ -872,149 +899,221 @@ function copyRefLink() {
                 }
             });
         }
+        
 
-                function updateUI() {
-            state.balance = state.balance || 0;
-            state.totalInvested = state.totalInvested || 0;
-            state.totalEarned = state.totalEarned || 0;
-            state.teamMembers = state.teamMembers || [];
-            state.investments = state.investments || [];
-            state.transactions = state.transactions || [];
+         function updateUI() {
+    // 1. Fallback initializations for numbers and arrays
+    state.balance = state.balance || 0;
+    state.totalInvested = state.totalInvested || 0;
+    state.totalEarned = state.totalEarned || 0;
+    state.teamMembers = state.teamMembers || [];
+    state.investments = state.investments || [];
+    state.transactions = state.transactions || [];
 
-            document.getElementById('userBalance').innerText = fmt(state.balance);
-            document.getElementById('totalInvested').innerText = fmt(state.totalInvested) + " UGX";
-            document.getElementById('totalEarned').innerText = fmt(state.totalEarned) + " UGX";
+    // 2. Ensure state.userProfile dynamically mirrors actual logged-in user data
+    const activeName = (state.userProfile && state.userProfile.name) || state.name || state.username || "User";
+    const activePhone = (state.userProfile && state.userProfile.phone) || state.phone || document.getElementById('loginPhone').value.trim();
+    const activePhoto = (state.userProfile && state.userProfile.photo) || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80";
 
-            document.getElementById('teamCount').innerText = state.teamMembers.length;
-            
-            if (state.userProfile && state.userProfile.name) {
-                document.getElementById('refLink').innerText = `https://aromalux.ug/ref/${state.userProfile.name.toLowerCase().replace(/\s+/g, '_')}`;
-                document.getElementById('profileNameDisplay').innerText = state.userProfile.name;
-                document.getElementById('profilePhoneDisplay').innerText = state.userProfile.phone;
-                document.getElementById('profileAvatar').src = state.userProfile.photo;
-                document.getElementById('inputName').value = state.userProfile.name;
-                document.getElementById('inputPhone').value = state.userProfile.phone;
-            }
-            
-            loadUserReferralLink();
-            const teamListEl = document.getElementById('teamList');
-            if(state.teamMembers.length === 0) {
-                teamListEl.innerHTML = `
-                    <div class="glass-card p-4 rounded-xl text-center text-slate-400 text-xs">
-                        <i class="fa-solid fa-user-group text-xl mb-1.5 text-slate-600 block"></i>
-                        No team members yet. Share your referral link to start building your team!
-                    </div>
-                `;
-            } else {
-                teamListEl.innerHTML = state.teamMembers.map(m => `
-                    <div class="glass-card p-3 rounded-xl flex justify-between items-center border border-slate-700/50">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center text-gold font-bold text-xs"><i class="fa-solid fa-user"></i></div>
-                            <div>
-                                <p class="font-bold text-xs text-slate-200">${m.name}</p>
-                                <p class="text-[10px] text-gold-light font-semibold"><i class="fa-solid fa-phone mr-1"></i>${m.phone}</p>
-                                <span class="text-[9px] text-slate-400">Joined: ${m.date}</span>
-                            </div>
+    state.userProfile = {
+        name: activeName,
+        phone: activePhone,
+        photo: activePhoto
+    };
+
+    // 3. Update top-level balance cards
+    const userBalanceEl = document.getElementById('userBalance');
+    if (userBalanceEl) userBalanceEl.innerText = fmt(state.balance);
+
+    const totalInvestedEl = document.getElementById('totalInvested');
+    if (totalInvestedEl) totalInvestedEl.innerText = fmt(state.totalInvested) + " UGX";
+
+    const totalEarnedEl = document.getElementById('totalEarned');
+    if (totalEarnedEl) totalEarnedEl.innerText = fmt(state.totalEarned) + " UGX";
+
+    const teamCountEl = document.getElementById('teamCount');
+    if (teamCountEl) teamCountEl.innerText = state.teamMembers.length;
+
+    // 4. Update dynamic referral link using actual user slug
+    const userSlug = activeName.toLowerCase().replace(/\s+/g, '_');
+    const refLinkEl = document.getElementById('refLink');
+    if (refLinkEl) {
+        refLinkEl.innerText = `https://aromalux-ug.vercel.app/ref/${userSlug}`;
+    }
+
+    // 5. Update Profile Screen DOM elements with real details (No false hardcoded data)
+    const profileNameDisplay = document.getElementById('profileNameDisplay');
+    if (profileNameDisplay) profileNameDisplay.innerText = activeName;
+
+    const profilePhoneDisplay = document.getElementById('profilePhoneDisplay');
+    if (profilePhoneDisplay) profilePhoneDisplay.innerText = activePhone;
+
+    const profileAvatar = document.getElementById('profileAvatar');
+    if (profileAvatar && activePhoto) profileAvatar.src = activePhoto;
+
+    const inputName = document.getElementById('inputName');
+    if (inputName) inputName.value = activeName;
+
+    const inputPhone = document.getElementById('inputPhone');
+    if (inputPhone) inputPhone.value = activePhone;
+
+    if (typeof loadUserReferralLink === 'function') {
+        loadUserReferralLink();
+    }
+
+    // 6. Render Team List
+    const teamListEl = document.getElementById('teamList');
+    if (teamListEl) {
+        if (state.teamMembers.length === 0) {
+            teamListEl.innerHTML = `
+                <div class="glass-card p-4 rounded-xl text-center text-slate-400 text-xs">
+                    <i class="fa-solid fa-user-group text-xl mb-1.5 text-slate-600 block"></i>
+                    No team members yet. Share your referral link to start building your team!
+                </div>
+            `;
+        } else {
+            teamListEl.innerHTML = state.teamMembers.map(m => `
+                <div class="glass-card p-3 rounded-xl flex justify-between items-center border border-slate-700/50">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-9 h-9 rounded-full bg-slate-800 flex items-center justify-center text-gold font-bold text-xs"><i class="fa-solid fa-user"></i></div>
+                        <div>
+                            <p class="font-bold text-xs text-slate-200">${m.name}</p>
+                            <p class="text-[10px] text-gold-light font-semibold"><i class="fa-solid fa-phone mr-1"></i>${m.phone}</p>
+                            <span class="text-[9px] text-slate-400">Joined: ${m.date}</span>
                         </div>
-                        <span class="text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">Active Member</span>
                     </div>
-                `).join('');
-            }
+                    <span class="text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">Active Member</span>
+                </div>
+            `).join('');
+        }
+    }
 
-            const list = document.getElementById('activeInvestmentsList');
-            if (state.investments.length === 0) {
-                list.innerHTML = `
-                    <div class="glass-card p-5 rounded-xl text-center text-slate-400 text-xs">
-                        <i class="fa-solid fa-box-open text-2xl mb-2 text-slate-600 block"></i>
-                        No active perfume packages yet. Go to Products to invest!
-                    </div>
-                `;
-            } else {
-                const now = Date.now();
-                list.innerHTML = state.investments.map((inv, idx) => {
-                    const diff = inv.nextPayout - now;
-                    const hours = diff > 0 ? Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)) : 0;
-                    const minutes = diff > 0 ? Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)) : 0;
-                    const seconds = diff > 0 ? Math.floor((diff % (1000 * 60)) / 1000) : 0;
-                    const timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-                    const statusText = inv.daysLeft > 0 ? `${inv.daysLeft} Days Left` : `<span class="text-emerald-400 font-bold">Cycle Completed (Renewable)</span>`;
+    // 7. Render Active Investments List
+    const list = document.getElementById('activeInvestmentsList');
+    if (list) {
+        if (state.investments.length === 0) {
+            list.innerHTML = `
+                <div class="glass-card p-5 rounded-xl text-center text-slate-400 text-xs">
+                    <i class="fa-solid fa-box-open text-2xl mb-2 text-slate-600 block"></i>
+                    No active perfume packages yet. Go to Products to invest!
+                </div>
+            `;
+        } else {
+            const now = Date.now();
+            list.innerHTML = state.investments.map((inv, idx) => {
+                const diff = inv.nextPayout - now;
+                const hours = diff > 0 ? Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)) : 0;
+                const minutes = diff > 0 ? Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)) : 0;
+                const seconds = diff > 0 ? Math.floor((diff % (1000 * 60)) / 1000) : 0;
+                const timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                const statusText = inv.daysLeft > 0 ? `${inv.daysLeft} Days Left` : `<span class="text-emerald-400 font-bold">Cycle Completed (Renewable)</span>`;
 
-                    return `
-                        <div class="glass-card p-4 rounded-xl border border-gold/30">
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="flex items-center space-x-3">
-                                    <img src="${inv.img}" class="w-10 h-10 object-contain bg-slate-900 rounded-lg p-1">
-                                    <div>
-                                        <h5 class="font-bold text-xs text-slate-200">${inv.name}</h5>
-                                        <p class="text-[10px] text-slate-400">Purchased: ${inv.purchaseDate}</p>
-                                    </div>
-                                </div>
-                                <span class="text-[10px] bg-gold/10 text-gold border border-gold/30 px-2 py-0.5 rounded-full font-bold">${statusText}</span>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-800 text-[11px]">
-                                <div><span class="text-slate-400">Daily Payout:</span> <strong class="text-emerald-400">+${fmt(inv.daily)} UGX</strong></div>
-                                <div><span class="text-slate-400">Next Payout In:</span> <strong class="text-gold font-mono" id="timer-${idx}">${timeStr}</strong></div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-
-            const tList = document.getElementById('transactionsList');
-            tList.innerHTML = state.transactions.map(tx => {
-                let icon = 'fa-arrow-down text-emerald-400 bg-emerald-500/20';
-                if(tx.type === 'withdrawal') icon = 'fa-arrow-up text-amber-400 bg-amber-500/20';
-                if(tx.type === 'investment') icon = 'fa-cart-shopping text-blue-400 bg-blue-500/20';
-                if(tx.type === 'payout') icon = 'fa-coins text-emerald-400 bg-emerald-500/20';
-                
                 return `
-                    <div class="glass-card p-3 rounded-xl flex justify-between items-center">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-8 h-8 rounded-full ${icon} flex items-center justify-center text-xs"><i class="fa-solid ${icon.split(' ')[0]}"></i></div>
-                            <div>
-                                <p class="font-bold text-xs text-slate-200">${tx.title}</p>
-                                <span class="text-[10px] text-slate-400">${tx.status} • ${tx.date}</span>
+                    <div class="glass-card p-4 rounded-xl border border-gold/30">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-3">
+                                <img src="${inv.img}" class="w-10 h-10 object-contain bg-slate-900 rounded-lg p-1">
+                                <div>
+                                    <h5 class="font-bold text-xs text-slate-200">${inv.name}</h5>
+                                    <p class="text-[10px] text-slate-400">Purchased: ${inv.purchaseDate}</p>
+                                </div>
                             </div>
+                            <span class="text-[10px] bg-gold/10 text-gold border border-gold/30 px-2 py-0.5 rounded-full font-bold">${statusText}</span>
                         </div>
-                        <span class="text-xs font-bold text-emerald-400">+${fmt(tx.amount)} UGX</span>
+                        <div class="grid grid-cols-2 gap-2 mt-2 pt-2 border-t border-slate-800 text-[11px]">
+                            <div><span class="text-slate-400">Daily Payout:</span> <strong class="text-emerald-400">+${fmt(inv.daily)} UGX</strong></div>
+                            <div><span class="text-slate-400">Next Payout In:</span> <strong class="text-gold font-mono" id="timer-${idx}">${timeStr}</strong></div>
+                        </div>
                     </div>
                 `;
             }).join('');
         }
-        
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    state.userProfile.photo = e.target.result;
-                    document.getElementById('profileAvatar').src = e.target.result;
-                    alert("Profile picture loaded successfully from device storage!");
-                };
-                reader.readAsDataURL(file);
-            }
-        }
+    }
 
-        function openModal(modalId) { document.getElementById(modalId).classList.remove('hidden'); }
-        function closeModal(modalId) { document.getElementById(modalId).classList.add('hidden'); }
+    // 8. Render Transactions List
+    const tList = document.getElementById('transactionsList');
+    if (tList) {
+        tList.innerHTML = state.transactions.map(tx => {
+            let icon = 'fa-arrow-down text-emerald-400 bg-emerald-500/20';
+            if (tx.type === 'withdrawal') icon = 'fa-arrow-up text-amber-400 bg-amber-500/20';
+            if (tx.type === 'investment') icon = 'fa-cart-shopping text-blue-400 bg-blue-500/20';
+            if (tx.type === 'payout') icon = 'fa-coins text-emerald-400 bg-emerald-500/20';
 
-        function processDeposit() {
-            const amt = parseInt(document.getElementById('depositAmountInput').value);
-            if (isNaN(amt) || amt < 15000) {
-                alert("Minimum deposit amount is 15,000 UGX.");
-                return;
-            }
-            state.balance += amt;
-            state.transactions.unshift({ type: 'deposit', title: 'Mobile Money Deposit', amount: amt, status: 'Completed', date: 'Just now' });
-            updateUI();
-            closeModal('depositModal');
-            document.getElementById('depositAmountInput').value = '';
-            alert(`Successfully deposited ${fmt(amt)} UGX!`);
-        }
+            return `
+                <div class="glass-card p-3 rounded-xl flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-full ${icon} flex items-center justify-center text-xs"><i class="fa-solid ${icon.split(' ')[0]}"></i></div>
+                        <div>
+                            <p class="font-bold text-xs text-slate-200">${tx.title}</p>
+                            <span class="text-[10px] text-slate-400">${tx.status} • ${tx.date}</span>
+                        </div>
+                    </div>
+                    <span class="text-xs font-bold text-emerald-400">+${fmt(tx.amount)} UGX</span>
+                </div>
+            `;
+        }).join('');
+    }
+}
 
+function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            state.userProfile = state.userProfile || {};
+            state.userProfile.photo = e.target.result;
+            const profileAvatar = document.getElementById('profileAvatar');
+            if (profileAvatar) profileAvatar.src = e.target.result;
+            syncUserData(); // Sync profile picture update immediately to Firebase
+            alert("Profile picture loaded successfully from device storage!");
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function openModal(modalId) { 
+    const el = document.getElementById(modalId);
+    if (el) el.classList.remove('hidden'); 
+}
+
+function closeModal(modalId) { 
+    const el = document.getElementById(modalId);
+    if (el) el.classList.add('hidden'); 
+}
+
+function processDeposit() {
+    const amtInput = document.getElementById('depositAmountInput');
+    const amt = parseInt(amtInput.value);
+    if (isNaN(amt) || amt < 15000) {
+        alert("Minimum deposit amount is 15,000 UGX.");
+        return;
+    }
+
+    state.balance = (state.balance || 0) + amt;
+    state.transactions = state.transactions || [];
+    state.transactions.unshift({ 
+        type: 'deposit', 
+        title: 'Mobile Money Deposit', 
+        amount: amt, 
+        status: 'Completed', 
+        date: new Date().toLocaleDateString() 
+    });
+
+    // CRITICAL: Write deposit directly to Firebase database so it persists on next login
+    syncUserData();
+
+    updateUI();
+    closeModal('depositModal');
+    amtInput.value = '';
+    alert(`Successfully deposited ${fmt(amt)} UGX!`);
+}
+       
         function processWithdraw() {
-            const amt = parseInt(document.getElementById('withdrawAmountInput').value);
-            const phone = document.getElementById('withdrawPhoneInput').value.trim();
+            const amtInput = document.getElementById('withdrawAmountInput');
+            const phoneInput = document.getElementById('withdrawPhoneInput');
+            
+            const amt = parseInt(amtInput.value);
+            const phone = phoneInput.value.trim();
 
             if (!isValidUgandaPhone(phone)) {
                 alert("Withdrawal phone number must strictly start with '07' and be exactly 10 digits long.");
@@ -1024,16 +1123,28 @@ function copyRefLink() {
                 alert("Minimum withdrawal amount is 5,000 UGX.");
                 return;
             }
+            state.balance = state.balance || 0;
             if (amt > state.balance) {
                 alert("Insufficient account balance.");
                 return;
             }
 
             state.balance -= amt;
-            state.transactions.unshift({ type: 'withdrawal', title: 'Mobile Money Withdrawal', amount: amt, status: 'Pending', date: 'Just now' });
+            state.transactions = state.transactions || [];
+            state.transactions.unshift({ 
+                type: 'withdrawal', 
+                title: `Mobile Money Withdrawal (${phone})`, 
+                amount: amt, 
+                status: 'Pending', 
+                date: new Date().toLocaleDateString() 
+            });
+
+            // CRITICAL: Commit balance & withdrawal transaction immediately to Firebase
+            syncUserData();
+
             updateUI();
             closeModal('withdrawModal');
-            document.getElementById('withdrawAmountInput').value = '';
+            amtInput.value = '';
             alert(`Withdrawal request of ${fmt(amt)} UGX submitted successfully!`);
         }
 
@@ -1041,20 +1152,44 @@ function copyRefLink() {
             const name = document.getElementById('inputName').value.trim();
             const phone = document.getElementById('inputPhone').value.trim();
 
-            if(!isValidUgandaPhone(phone)) {
+            if (!name) {
+                alert("Username cannot be empty.");
+                return;
+            }
+
+            if (!isValidUgandaPhone(phone)) {
                 alert("Phone number must strictly start with '07' and be 10 digits long.");
                 return;
             }
 
+            state.userProfile = state.userProfile || {};
             state.userProfile.name = name;
             state.userProfile.phone = phone;
+
+            // Also keep top-level name and phone in sync
+            state.name = name;
+            state.phone = phone;
+
+            // CRITICAL: Save updated username and phone to Firebase
+            syncUserData();
+
             updateUI();
             alert("Profile updated successfully!");
         }
- 
 
         function logout() {
-            if(confirm("Are you sure you want to log out?")) {
+            if (confirm("Are you sure you want to log out?")) {
+                // Clear local active state to keep sessions completely clean
+                state = {
+                    balance: 0,
+                    totalInvested: 0,
+                    totalEarned: 0,
+                    investments: [],
+                    transactions: [],
+                    teamMembers: [],
+                    userProfile: { name: "", phone: "", photo: "" }
+                };
+
                 document.getElementById('authWrapper').classList.remove('hidden');
                 document.getElementById('mainAppWrapper').classList.add('hidden');
                 switchAuthView('authLogin');
@@ -1062,10 +1197,11 @@ function copyRefLink() {
         }
 
         window.onload = () => {
-    captureReferralFromURL();
-    renderPerfumes();
-};
-
+            captureReferralFromURL();
+            renderPerfumes();
+        };
     </script>
 </body>
 </html>
+
+        
