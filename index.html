@@ -61,9 +61,15 @@
                     <input type="text" id="loginPhone" maxlength="10" placeholder="07XXXXXXXX" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-gold">
                 </div>
                 <div>
-                    <label class="block text-[11px] text-slate-400 mb-1">Password</label>
-                    <input type="password" id="loginPassword" placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-gold">
-                </div>
+    <label class="block text-[11px] text-slate-400 mb-1">Password</label>
+    <div class="relative flex items-center">
+        <input type="password" id="loginPassword" placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 pr-10 text-xs text-white focus:outline-none focus:border-gold">
+        <button type="button" onclick="togglePasswordVisibility('loginPassword', 'eyeIconLogin')" class="absolute right-3 text-slate-400 hover:text-gold focus:outline-none text-xs">
+            <i id="eyeIconLogin" class="fa-solid fa-eye"></i>
+        </button>
+    </div>
+</div>
+
                 <div class="flex justify-between items-center text-xs">
                     <span class="text-slate-400">Forgot password?</span>
                     <button onclick="switchAuthView('authForgot')" class="text-gold font-bold hover:underline">Reset here</button>
@@ -83,14 +89,24 @@
                     <label class="block text-[11px] text-slate-400 mb-1">Phone Number (Must start with 07, 10 digits)</label>
                     <input type="text" id="regPhone" maxlength="10" placeholder="07XXXXXXXX" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-gold">
                 </div>
+                
+    <label class="block text-[11px] text-slate-400 mb-1">Password</label>
+    <div class="relative flex items-center">
+        <input type="password" id="regPassword" placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 pr-10 text-xs text-white focus:outline-none focus:border-gold">
+        <button type="button" onclick="togglePasswordVisibility('regPassword', 'eyeIconReg')" class="absolute right-3 text-slate-400 hover:text-gold focus:outline-none text-xs">
+            <i id="eyeIconReg" class="fa-solid fa-eye"></i>
+        </button>
+    </div>
                 <div>
-                    <label class="block text-[11px] text-slate-400 mb-1">Password (Alphanumeric: letters & numbers)</label>
-                    <input type="password" id="regPassword" placeholder="e.g., Pass1234" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-gold">
-                </div>
-                <div>
-                    <label class="block text-[11px] text-slate-400 mb-1">Confirm Password</label>
-                    <input type="password" id="regConfirmPassword" placeholder="Confirm password" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-gold">
-                </div>
+    <label class="block text-[11px] text-slate-400 mb-1">Confirm Password</label>
+    <div class="relative flex items-center">
+        <input type="password" id="regConfirmPassword" placeholder="Confirm password" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 pr-10 text-xs text-white focus:outline-none focus:border-gold">
+        <button type="button" onclick="togglePasswordVisibility('regConfirmPassword', 'eyeIconConfirm')" class="absolute right-3 text-slate-400 hover:text-gold focus:outline-none text-xs">
+            <i id="eyeIconConfirm" class="fa-solid fa-eye"></i>
+        </button>
+    </div>
+</div>
+
                 <div>
                     <label class="block text-[11px] text-slate-400 mb-1">Referral Username (Ref)</label>
                     <input type="text" id="regRef" placeholder="Referrer's username (optional)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-gold">
@@ -399,22 +415,54 @@
 
     <!-- JavaScript Application Logic -->
     <script>
-    // Function to capture whichever referrer username is in the URL path
+    function togglePasswordVisibility(inputId, iconId) {
+    const passwordInput = document.getElementById(inputId);
+    const eyeIcon = document.getElementById(iconId);
+
+    if (!passwordInput || !eyeIcon) return;
+
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        eyeIcon.classList.remove('fa-eye');
+        eyeIcon.classList.add('fa-eye-slash');
+    } else {
+        passwordInput.type = 'password';
+        eyeIcon.classList.remove('fa-eye-slash');
+        eyeIcon.classList.add('fa-eye');
+    }
+}
+
+// Helper function to set referral field input safely
+function autoFillRefInput(refValue) {
+    const regRefInput = document.getElementById('regRef');
+    if (regRefInput) {
+        regRefInput.value = refValue;
+    }
+}
+
+// Function to capture whichever referrer username is in the URL path
 function captureReferralFromURL() {
     const path = window.location.pathname;
     
     if (path.includes('/ref/')) {
-        // Automatically splits and extracts whatever username is in the URL (e.g., 'joshua', 'sarah', etc.)
-        const refUser = path.split('/ref/')[1]; 
+        // Automatically extract whatever username is in the URL (e.g., '/ref/ceo_developer/')
+        let refUser = path.split('/ref/')[1]; 
         
         if (refUser && refUser.trim() !== '') {
-            const cleanRef = decodeURIComponent(refUser.trim());
+            // Remove trailing slashes and normalize slug format (lowercase + underscores)
+            refUser = refUser.replace(/\/$/, '');
+            const cleanRef = decodeURIComponent(refUser.trim()).toLowerCase().replace(/\s+/g, '_');
             
-            // Save this specific inviter's name to browser memory
+            // Save normalized inviter slug to browser memory
             localStorage.setItem('aromalux_referrer', cleanRef);
             
             // Populate the registration input field automatically
             autoFillRefInput(cleanRef);
+
+            // Automatically switch to the register screen if arriving via referral link
+            if (typeof switchAuthView === 'function') {
+                switchAuthView('authRegister');
+            }
         }
     } else {
         // Fallback: check stored referrer from memory if they visit the root URL later
@@ -588,60 +636,64 @@ function copyRefLink() {
         }
 
         function handleRegister() {
-            const username = document.getElementById('regUsername').value.trim();
-            const phone = document.getElementById('regPhone').value.trim();
-            const password = document.getElementById('regPassword').value.trim();
-            const refUsername = document.getElementById('regRef').value || "";
+    const username = document.getElementById('regUsername').value.trim();
+    const phone = document.getElementById('regPhone').value.trim();
+    const password = document.getElementById('regPassword').value.trim();
+    const refInput = document.getElementById('regRef').value || "";
 
-            if (!username || !phone || !password) {
-                alert("Please fill in all required fields.");
-                return;
-            }
+    // Normalize referrer slug to lowercase and replace spaces with underscores to match format
+    const refUsername = refInput.trim().toLowerCase().replace(/\s+/g, '_');
 
-            if (!isValidUgandaPhone(phone)) {
-                alert("Phone number must strictly start with '07' and be exactly 10 digits long.");
-                return;
-            }
+    if (!username || !phone || !password) {
+        alert("Please fill in all required fields.");
+        return;
+    }
 
-            const userRef = db.ref('users/' + phone);
+    if (!isValidUgandaPhone(phone)) {
+        alert("Phone number must strictly start with '07' and be exactly 10 digits long.");
+        return;
+    }
 
-            userRef.once('value', (snapshot) => {
-                if (snapshot.exists()) {
-                    alert("An account with this phone number already exists!");
-                } else {
-                    const newUser = {
-                        username: username,
-                        phone: phone,
-                        password: password,
-                        balance: 3000, // Welcome bonus
-                        totalInvested: 0,
-                        totalEarned: 0,
-                        referrer: refUsername,
-                        investments: [],
-                        teamMembers: [],
-                        userProfile: {
-                            name: username,
-                            phone: phone,
-                            photo: ""
-                        },
-                        transactions: [
-                            { type: 'bonus', title: 'Welcome Bonus', amount: 3000, status: 'Completed', date: new Date().toLocaleDateString() }
-                        ]
-                    };
+    const userRef = db.ref('users/' + phone);
 
-                    userRef.set(newUser).then(() => {
-                        alert("Account created successfully online! 3,000 UGX Welcome Bonus added.");
-                        state = newUser;
-                        updateUI();
-                        document.getElementById('authWrapper').classList.add('hidden');
-                        document.getElementById('mainAppWrapper').classList.remove('hidden');
-                    }).catch((error) => {
-                        alert("Registration failed: " + error.message);
-                    });
-                }
+    userRef.once('value', (snapshot) => {
+        if (snapshot.exists()) {
+            alert("An account with this phone number already exists!");
+        } else {
+            const newUser = {
+                username: username,
+                phone: phone,
+                password: password,
+                balance: 3000, // Welcome bonus
+                totalInvested: 0,
+                totalEarned: 0,
+                referrer: refUsername,
+                hasMadeFirstPurchase: false, // CRITICAL: Tracks if 10% referral bonus has been paid out yet
+                investments: [],
+                teamMembers: [],
+                userProfile: {
+                    name: username,
+                    phone: phone,
+                    photo: ""
+                },
+                transactions: [
+                    { type: 'bonus', title: 'Welcome Bonus', amount: 3000, status: 'Completed', date: new Date().toLocaleDateString() }
+                ]
+            };
+
+            userRef.set(newUser).then(() => {
+                alert("Account created successfully online! 3,000 UGX Welcome Bonus added.");
+                state = newUser;
+                updateUI();
+                document.getElementById('authWrapper').classList.add('hidden');
+                document.getElementById('mainAppWrapper').classList.remove('hidden');
+            }).catch((error) => {
+                alert("Registration failed: " + error.message);
             });
         }
-        
+    });
+}
+
       function requestResetCode() {
     const phone = document.getElementById('forgotPhone').value.trim();
     if (!isValidUgandaPhone(phone)) {
@@ -812,14 +864,16 @@ function copyRefLink() {
         return;
     }
 
+    // Deduct perfume cost from buyer's balance
     state.balance -= perfume.price;
     state.totalInvested = (state.totalInvested || 0) + perfume.price;
     
+    const purchaseDate = new Date().toLocaleDateString();
     const nextPayoutTime = Date.now() + (24 * 60 * 60 * 1000);
 
     state.investments.push({
         ...perfume,
-        purchaseDate: new Date().toLocaleDateString(),
+        purchaseDate: purchaseDate,
         nextPayout: nextPayoutTime,
         daysLeft: perfume.days
     });
@@ -833,19 +887,80 @@ function copyRefLink() {
         date: 'Just now'
     });
 
-    syncUserData();
-
-    if (state.referrerName && !state.hasMadeFirstPurchase) {
-        const commission = perfume.price * 0.10;
+    // CRITICAL: Check and credit 10% referral commission in Firebase if this is the user's first purchase
+    const refSlug = state.referrer ? state.referrer.trim().toLowerCase().replace(/\s+/g, '_') : "";
+    
+    if (refSlug && !state.hasMadeFirstPurchase) {
         state.hasMadeFirstPurchase = true;
-        alert(`First purchase successful! Your referrer (${state.referrerName}) received an instant 10% commission (${fmt(commission)} UGX).`);
+        processReferralCommission(perfume.price, refSlug);
+        alert(`Successfully purchased "${perfume.name}" for ${fmt(perfume.price)} UGX! Daily payout timer started.\n\nYour referrer received an instant 10% commission!`);
     } else {
         alert(`Successfully purchased "${perfume.name}" for ${fmt(perfume.price)} UGX! Daily payout timer started.`);
     }
 
+    // Persist buyer's updated balance & investments to Firebase
+    syncUserData();
+
     updateUI();
     renderPerfumes();
     switchTab('my-products');
+}
+
+// Helper function to update the referrer's account directly in Firebase
+function processReferralCommission(purchasePrice, refSlug) {
+    const commissionAmount = Math.floor(purchasePrice * 0.10); // 10% bonus
+
+    db.ref('users').once('value', (snapshot) => {
+        if (!snapshot.exists()) return;
+
+        const users = snapshot.val();
+        let targetPhone = null;
+        let referrerData = null;
+
+        // Search Firebase users to find matching username slug
+        for (const phoneKey in users) {
+            const u = users[phoneKey];
+            const uName = (u.userProfile && u.userProfile.name) || u.username || u.name || "";
+            const uSlug = uName.toString().trim().toLowerCase().replace(/\s+/g, '_');
+
+            if (uSlug === refSlug) {
+                targetPhone = phoneKey;
+                referrerData = u;
+                break;
+            }
+        }
+
+        if (targetPhone && referrerData) {
+            const updatedBalance = (referrerData.balance || 0) + commissionAmount;
+            
+            const updatedTeam = referrerData.teamMembers || [];
+            updatedTeam.push({
+                name: (state.userProfile && state.userProfile.name) || state.username || "Team Member",
+                phone: state.phone || document.getElementById('loginPhone').value.trim(),
+                date: new Date().toLocaleDateString()
+            });
+
+            const updatedTx = referrerData.transactions || [];
+            updatedTx.unshift({
+                type: 'bonus',
+                title: `10% Referral Commission (${state.username || 'Team Member'})`,
+                amount: commissionAmount,
+                status: 'Completed',
+                date: new Date().toLocaleDateString()
+            });
+
+            // Commit commission update directly to referrer's record in Firebase
+            db.ref('users/' + targetPhone).update({
+                balance: updatedBalance,
+                teamMembers: updatedTeam,
+                transactions: updatedTx
+            }).then(() => {
+                console.log(`Successfully credited ${commissionAmount} UGX referral bonus to ${targetPhone}`);
+            }).catch((err) => {
+                console.error("Error updating referrer data: ", err.message);
+            });
+        }
+    });
 }
 
         // Live Timer Loop
