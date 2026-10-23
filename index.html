@@ -366,52 +366,245 @@
         </nav>
     </div>
 
-    <!-- Deposit Modal -->
-    <div id="depositModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="glass-card max-w-sm w-full p-5 rounded-2xl border border-gold/30">
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="font-bold text-base text-gold-light"><i class="fa-solid fa-wallet mr-2"></i> Deposit Funds</h3>
-                <button onclick="closeModal('depositModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
-            </div>
-            <p class="text-xs text-slate-300 mb-3">Minimum deposit amount is <strong class="text-gold">15,000 UGX</strong>.</p>
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-[11px] text-slate-400 mb-1">Enter Amount (UGX)</label>
-                    <input type="number" id="depositAmountInput" placeholder="15000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
-                </div>
-                <div>
-                    <label class="block text-[11px] text-slate-400 mb-1">Payment Method</label>
-                    <select class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
-                        <option>MTN Mobile Money Uganda</option>
-                        <option>Airtel Money Uganda</option>
-                    </select>
-                </div>
-                <button onclick="processDeposit()" class="w-full gold-gradient text-slate-950 font-bold py-2.5 rounded-lg text-xs mt-1 shadow-md">Confirm Deposit</button>
-            </div>
+<!-- ================= DEPOSIT MODAL ================= -->
+<div id="depositModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="glass-card max-w-sm w-full p-5 rounded-2xl border border-gold/30">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="font-bold text-base text-gold-light">
+                <i class="fa-solid fa-wallet mr-2"></i> Deposit Funds
+            </h3>
+            <button onclick="closeModal('depositModal')" class="text-slate-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-base"></i>
+            </button>
         </div>
-    </div>
 
-    <!-- Withdraw Modal -->
-    <div id="withdrawModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="glass-card max-w-sm w-full p-5 rounded-2xl border border-gold/30">
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="font-bold text-base text-gold-light"><i class="fa-solid fa-money-bill-transfer mr-2"></i> Withdraw Funds</h3>
-                <button onclick="closeModal('withdrawModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-base"></i></button>
+        <!-- STEP 1: Enter Details -->
+        <div id="depositStep1" class="space-y-3">
+            <p class="text-xs text-slate-300">Minimum deposit amount is <strong class="text-gold">15,000 UGX</strong>.</p>
+            
+            <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Enter Amount (UGX)</label>
+                <input type="number" id="depositAmountInput" placeholder="15000" min="15000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
             </div>
-            <p class="text-xs text-slate-300 mb-3">Minimum withdrawal amount is <strong class="text-gold">5,000 UGX</strong>.</p>
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-[11px] text-slate-400 mb-1">Amount to Withdraw (UGX)</label>
-                    <input type="number" id="withdrawAmountInput" placeholder="5000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+
+            <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Your Mobile Money Phone Number</label>
+                <input type="tel" id="depositPhoneInput" placeholder="07XXXXXXXX" maxlength="10" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+            </div>
+
+            <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Payment Method</label>
+                <select id="depositMethodSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                    <option value="MTN">MTN Mobile Money Uganda</option>
+                    <option value="Airtel">Airtel Money Uganda</option>
+                </select>
+            </div>
+
+            <button onclick="goToDepositStep2()" class="w-full gold-gradient text-slate-950 font-bold py-2.5 rounded-lg text-xs mt-1 shadow-md hover:opacity-90 transition">
+                CONTINUE <i class="fa-solid fa-arrow-right ml-1"></i>
+            </button>
+        </div>
+
+        <!-- STEP 2: Transfer Instructions -->
+        <div id="depositStep2" class="hidden space-y-3">
+            <div class="p-3 bg-slate-900/90 border border-gold/40 rounded-xl space-y-2 text-xs">
+                <div class="text-[11px] text-slate-400 uppercase font-semibold">Send Money To:</div>
+                
+                <!-- Recipient Phone Number Row with Copy Button -->
+                <div class="flex items-center justify-between bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                    <div>
+                        <div class="text-[10px] text-slate-400">Target Number:</div>
+                        <div class="font-bold text-gold text-sm tracking-wide" id="targetPhoneNumber">0765233428</div>
+                    </div>
+                    <button onclick="copyDepositNumber()" class="px-2.5 py-1 bg-gold/20 hover:bg-gold/30 border border-gold/50 text-gold rounded text-[11px] font-semibold flex items-center gap-1 transition">
+                        <i class="fa-regular fa-copy"></i> <span id="copyBtnText">Copy</span>
+                    </button>
                 </div>
-                <div>
-                    <label class="block text-[11px] text-slate-400 mb-1">Phone Number (Must start with 07)</label>
-                    <input type="text" id="withdrawPhoneInput" maxlength="10" placeholder="07XXXXXXXX" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+
+                <!-- Recipient Name Row -->
+                <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+                    <div class="text-[10px] text-slate-400">Account Name:</div>
+                    <div class="font-bold text-white text-xs tracking-wide">GRACE THUMIRWOTH</div>
                 </div>
-                <button onclick="processWithdraw()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg text-xs mt-1 shadow-lg">Submit Withdrawal</button>
+
+                <!-- Transaction Details Summary -->
+                <div class="text-[11px] text-slate-300 pt-1 border-t border-slate-800 space-y-1">
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Amount to send:</span>
+                        <span class="font-bold text-white"><span id="summaryAmount">0</span> UGX</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Your Number:</span>
+                        <span class="font-bold text-white" id="summaryPhone">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transfer Guidelines -->
+            <div class="text-[11px] text-slate-300 bg-slate-900/50 p-2.5 rounded-lg border border-slate-800 space-y-1">
+                <p class="font-semibold text-gold mb-1"><i class="fa-solid fa-circle-info mr-1"></i> Transfer Instructions:</p>
+                <ol class="list-decimal list-inside space-y-0.5 text-slate-400 text-[10.5px]">
+                    <li>Dial Mobile Money menu on your phone (*165# or *185#).</li>
+                    <li>Select <strong>Send Money</strong> &gt; <strong>Mobile User</strong>.</li>
+                    <li>Enter target number: <strong class="text-white">0765233428</strong>.</li>
+                    <li>Enter exact amount: <strong class="text-white"><span id="instructionAmount">0</span> UGX</strong>.</li>
+                    <li>Confirm recipient name: <strong class="text-white">GRACE THUMIRWOTH</strong>.</li>
+                    <li>Enter your Mobile Money PIN to complete transfer.</li>
+                </ol>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-2">
+                <button onclick="backToDepositStep1()" class="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-lg text-xs">
+                    <i class="fa-solid fa-arrow-left mr-1"></i> Back
+                </button>
+                <button onclick="completeManualDeposit()" class="w-2/3 gold-gradient text-slate-950 font-bold py-2.5 rounded-lg text-xs shadow-md hover:opacity-90 transition">
+                    Submit Deposit
+                </button>
             </div>
         </div>
+
     </div>
+</div> <!-- Properly closed depositModal div here -->
+
+<!-- ================= WITHDRAWAL MODAL ================= -->
+<div id="withdrawModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="glass-card max-w-sm w-full p-5 rounded-2xl border border-gold/30">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="font-bold text-base text-gold-light">
+                <i class="fa-solid fa-money-bill-transfer mr-2"></i> Withdraw Funds
+            </h3>
+            <button onclick="closeModal('withdrawModal')" class="text-slate-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-base"></i>
+            </button>
+        </div>
+
+        <p class="text-xs text-slate-300 mb-3">Minimum withdrawal amount is <strong class="text-gold">5,000 UGX</strong>.</p>
+
+        <div class="space-y-3">
+            <!-- 1. Full Name -->
+            <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Full Name</label>
+                <input type="text" id="withdrawNameInput" placeholder="e.g. John Doe" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+            </div>
+
+            <!-- 2. Phone Number -->
+            <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Phone Number (Must start with 07)</label>
+                <input type="text" id="withdrawPhoneInput" maxlength="10" placeholder="07XXXXXXXX" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+            </div>
+
+            <!-- 3. Network Provider -->
+            <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Network Provider</label>
+                <select id="withdrawMethodSelect" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+                    <option value="MTN">MTN Mobile Money Uganda</option>
+                    <option value="Airtel">Airtel Money Uganda</option>
+                </select>
+            </div>
+
+            <!-- 4. Amount Input with Live Calculation -->
+            <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Amount to Withdraw (UGX)</label>
+                <input type="number" id="withdrawAmountInput" oninput="calculateWithdrawFee()" placeholder="5000" min="5000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-gold">
+            </div>
+
+            <!-- 5. Hardcoded 15% Fee Breakdown -->
+            <div class="p-2.5 bg-slate-950 rounded-lg border border-slate-800 space-y-1 text-[11px]">
+                <div class="flex justify-between text-slate-400">
+                    <span>Withdrawal Fee (15%):</span>
+                    <span class="font-bold text-red-400" id="withdrawFeeDisplay">0 UGX</span>
+                </div>
+                <div class="flex justify-between text-slate-300 pt-1 border-t border-slate-800">
+                    <span>Net Amount You Receive:</span>
+                    <span class="font-bold text-gold" id="withdrawNetDisplay">0 UGX</span>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button onclick="processWithdraw()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg text-xs mt-1 shadow-lg transition">
+                Submit Withdrawal
+            </button>
+        </div>
+    </div>
+</div>
+<!-- ================= ADMIN CONTROL PANEL MODAL ================= -->
+<div id="adminModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex flex-col p-4 overflow-y-auto">
+    <div class="max-w-md w-full mx-auto bg-slate-900 border border-gold/40 rounded-2xl p-5 my-auto text-slate-100 shadow-2xl">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-center pb-3 border-b border-slate-800 mb-4">
+            <h2 class="font-bold text-base text-gold flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved"></i> Admin Control Panel
+            </h2>
+            <button onclick="closeModal('adminModal')" class="text-slate-400 hover:text-white text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="flex gap-1 bg-slate-950 p-1 rounded-xl mb-4 text-xs font-semibold">
+            <button onclick="switchAdminTab('deposits')" id="adminTabDepBtn" class="flex-1 py-2 rounded-lg bg-gold text-slate-950 transition">Deposits</button>
+            <button onclick="switchAdminTab('withdrawals')" id="adminTabWthBtn" class="flex-1 py-2 rounded-lg text-slate-400 hover:text-white transition">Withdrawals</button>
+            <button onclick="switchAdminTab('users')" id="adminTabUsrBtn" class="flex-1 py-2 rounded-lg text-slate-400 hover:text-white transition">Users</button>
+        </div>
+
+        <!-- TAB 1: PENDING DEPOSITS -->
+        <div id="adminDepositsSection" class="space-y-3">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pending Deposit Requests</h3>
+            <div id="adminDepositsList" class="space-y-2 max-h-72 overflow-y-auto pr-1">
+                <p class="text-xs text-slate-500 text-center py-4">Loading pending deposits...</p>
+            </div>
+        </div>
+
+        <!-- TAB 2: PENDING WITHDRAWALS -->
+        <div id="adminWithdrawalsSection" class="hidden space-y-3">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Pending Withdrawal Requests</h3>
+            <div id="adminWithdrawalsList" class="space-y-2 max-h-72 overflow-y-auto pr-1">
+                <p class="text-xs text-slate-500 text-center py-4">Loading pending withdrawals...</p>
+            </div>
+        </div>
+
+        <!-- TAB 3: USER MANAGEMENT -->
+        <div id="adminUsersSection" class="hidden space-y-3 text-xs">
+            <h3 class="font-bold text-slate-400 uppercase tracking-wider">User Account Management</h3>
+            
+            <div class="space-y-2 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                <div>
+                    <label class="block text-[10px] text-slate-400 mb-1">Target User Phone Number</label>
+                    <input type="text" id="adminTargetPhone" placeholder="07XXXXXXXX" maxlength="10" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:border-gold focus:outline-none">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Action Amount (UGX)</label>
+                        <input type="number" id="adminActionAmount" placeholder="e.g. 10000" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-gold focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">New Password (Optional)</label>
+                        <input type="text" id="adminNewPassword" placeholder="New pass" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-gold focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                    <button onclick="adminCreditUser()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg transition">Credit Account</button>
+                    <button onclick="adminDeductUser()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold py-2 rounded-lg transition">Deduct Balance</button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-900">
+                    <button onclick="adminResetPassword()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-lg transition">Reset Password</button>
+                    <button onclick="adminBanUser()" class="bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded-lg transition">Ban User</button>
+                </div>
+            </div>
+        </div>
+
+        <button onclick="loadAdminData()" class="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 rounded-xl text-xs transition">
+            <i class="fa-solid fa-rotate mr-1"></i> Refresh Requests
+        </button>
+    </div>
+</div>
 
     <!-- JavaScript Application Logic -->
     <script>
@@ -530,6 +723,212 @@ const auth = firebase.auth();
                 photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200'
             }
         };
+   let currentDepositData = {
+    amount: 0,
+    phone: '',
+    method: ''
+};
+
+// Validate Step 1 and proceed to Step 2
+function goToDepositStep2() {
+    const amountInput = document.getElementById('depositAmountInput');
+    const phoneInput = document.getElementById('depositPhoneInput');
+    const methodSelect = document.getElementById('depositMethodSelect');
+
+    const amount = Number(amountInput.value.trim());
+    const phone = phoneInput.value.trim();
+    const method = methodSelect.value;
+
+    if (!amount || amount < 15000) {
+        alert("Minimum deposit amount is 15,000 UGX.");
+        return;
+    }
+
+    // Basic 10-digit Ugandan phone number validation (07...)
+    const ugPhoneRegex = /^07\d{8}$/;
+    if (!ugPhoneRegex.test(phone)) {
+        alert("Please enter a valid 10-digit Ugandan phone number starting with '07'.");
+        return;
+    }
+
+    currentDepositData = { amount, phone, method };
+
+    // Update UI elements in Step 2
+    document.getElementById('summaryAmount').innerText = amount.toLocaleString();
+    document.getElementById('instructionAmount').innerText = amount.toLocaleString();
+    document.getElementById('summaryPhone').innerText = phone;
+
+    // Switch screens
+    document.getElementById('depositStep1').classList.add('hidden');
+    document.getElementById('depositStep2').classList.remove('hidden');
+}
+
+// Return back to Step 1
+function backToDepositStep1() {
+    document.getElementById('depositStep2').classList.add('hidden');
+    document.getElementById('depositStep1').classList.remove('hidden');
+}
+
+// Copy recipient number to clipboard
+function copyDepositNumber() {
+    const targetNumber = "0765233428";
+    navigator.clipboard.writeText(targetNumber).then(() => {
+        const copyBtnText = document.getElementById('copyBtnText');
+        copyBtnText.innerText = 'Copied!';
+        setTimeout(() => {
+            copyBtnText.innerText = 'Copy';
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+    });
+}
+
+// Final submission after user sends funds
+function completeManualDeposit() {
+    const txId = 'DEP_' + Date.now().toString().slice(-6);
+    
+    // Create new transaction record
+    const newTx = {
+        id: txId,
+        type: 'deposit',
+        title: 'Manual Mobile Money Deposit',
+        amount: '+' + currentDepositData.amount.toLocaleString() + ' UGX',
+        phone: currentDepositData.phone,
+        method: currentDepositData.method,
+        status: 'Pending Approval',
+        date: new Date().toLocaleDateString()
+    };
+
+    // Log to local state array
+    if (typeof state !== 'undefined' && state.transactions) {
+        state.transactions.unshift(newTx);
+    }
+
+    // Push to Firebase database (if initialized)
+    if (typeof db !== 'undefined' && typeof state !== 'undefined' && state.phone) {
+        db.ref('users/' + state.phone + '/transactions').set(state.transactions);
+    }
+
+    // Display updated approval timeframe alert
+    alert("Deposit request submitted successfully!\n\nReference: " + txId + "\nStatus: Pending Approval\n\nNote: Deposit approvals take 2-7 minutes. Your account balance will be updated automatically once verified.");
+
+    // Reset fields & close modal
+    document.getElementById('depositAmountInput').value = '';
+    document.getElementById('depositPhoneInput').value = '';
+    backToDepositStep1();
+    closeModal('depositModal');
+}
+// Calculate 15% hardcoded fee dynamically as the user types
+function calculateWithdrawFee() {
+    const amountInput = document.getElementById('withdrawAmountInput');
+    const feeDisplay = document.getElementById('withdrawFeeDisplay');
+    const netDisplay = document.getElementById('withdrawNetDisplay');
+
+    if (!amountInput || !feeDisplay || !netDisplay) return;
+
+    const amount = Number(amountInput.value) || 0;
+    const fee = amount * 0.15;
+    const netAmount = amount - fee;
+
+    feeDisplay.innerText = fee > 0 ? fee.toLocaleString() + ' UGX' : '0 UGX';
+    netDisplay.innerText = netAmount > 0 ? netAmount.toLocaleString() + ' UGX' : '0 UGX';
+}
+
+// Process and submit withdrawal request
+function processWithdraw() {
+    const nameInput = document.getElementById('withdrawNameInput');
+    const phoneInput = document.getElementById('withdrawPhoneInput');
+    const methodSelect = document.getElementById('withdrawMethodSelect');
+    const amountInput = document.getElementById('withdrawAmountInput');
+
+    const fullName = nameInput ? nameInput.value.trim() : '';
+    const phone = phoneInput ? phoneInput.value.trim() : '';
+    const method = methodSelect ? methodSelect.value : 'MTN';
+    const amount = amountInput ? Number(amountInput.value.trim()) : 0;
+
+    // 1. Full Name Validation
+    if (!fullName) {
+        alert("Please enter your full name.");
+        return;
+    }
+
+    // 2. Ugandan Phone Validation (07...)
+    const ugPhoneRegex = /^07\d{8}$/;
+    if (!ugPhoneRegex.test(phone)) {
+        alert("Phone number must strictly start with '07' and be exactly 10 digits long.");
+        return;
+    }
+
+    // 3. Minimum Amount Validation
+    if (!amount || amount < 5000) {
+        alert("Minimum withdrawal amount is 5,000 UGX.");
+        return;
+    }
+
+    // 4. Balance Check
+    const currentBalance = (typeof state !== 'undefined' && state.balance) ? state.balance : 0;
+    if (amount > currentBalance) {
+        alert("Insufficient account balance. Your current balance is " + currentBalance.toLocaleString() + " UGX.");
+        return;
+    }
+
+    // 5. Fee Calculations
+    const fee = amount * 0.15;
+    const netReceive = amount - fee;
+    const txId = 'WTH_' + Date.now().toString().slice(-6);
+
+    // 6. Create Transaction Record
+    const newTx = {
+        id: txId,
+        type: 'withdrawal',
+        title: 'Mobile Money Withdrawal',
+        amount: '-' + amount.toLocaleString() + ' UGX',
+        fee: fee.toLocaleString() + ' UGX',
+        netReceive: netReceive.toLocaleString() + ' UGX',
+        accountName: fullName,
+        phone: phone,
+        method: method,
+        status: 'Pending Approval',
+        date: new Date().toLocaleDateString()
+    };
+
+    // 7. Update Local State Balance
+    if (typeof state !== 'undefined') {
+        state.balance -= amount;
+        state.transactions = state.transactions || [];
+        state.transactions.unshift(newTx);
+    }
+
+    // 8. Sync directly to Firebase database
+    if (typeof syncUserData === 'function') {
+        syncUserData();
+    } else if (typeof db !== 'undefined' && typeof state !== 'undefined' && state.phone) {
+        db.ref('users/' + state.phone).update({
+            balance: state.balance,
+            transactions: state.transactions
+        });
+    }
+
+    // 9. Refresh UI & Close Modal
+    if (typeof updateUI === 'function') {
+        updateUI();
+    }
+    if (typeof closeModal === 'function') {
+        closeModal('withdrawModal');
+    }
+
+    alert("Withdrawal request submitted successfully!\n\nReference: " + txId + "\nRequested: " + amount.toLocaleString() + " UGX\nFee (15%): " + fee.toLocaleString() + " UGX\nNet Payout: " + netReceive.toLocaleString() + " UGX\nStatus: Pending Approval");
+
+    // 10. Reset Form Fields
+    if (nameInput) nameInput.value = '';
+    if (phoneInput) phoneInput.value = '';
+    if (amountInput) amountInput.value = '';
+    const feeDisplay = document.getElementById('withdrawFeeDisplay');
+    const netDisplay = document.getElementById('withdrawNetDisplay');
+    if (feeDisplay) feeDisplay.innerText = '0 UGX';
+    if (netDisplay) netDisplay.innerText = '0 UGX';
+}
+
 
         function fmt(num) { return num.toLocaleString(); }
           // Function to update the referral link dynamically for the logged-in user
@@ -845,7 +1244,27 @@ function copyRefLink() {
         console.error("Failed to sync user data: ", error.message);
     });
 }
-  
+// Calculate 15% hardcoded fee dynamically as the user types
+function calculateWithdrawFee() {
+    const amountInput = document.getElementById('withdrawAmountInput');
+    const feeDisplay = document.getElementById('withdrawFeeDisplay');
+    const netDisplay = document.getElementById('withdrawNetDisplay');
+
+    if (!amountInput || !feeDisplay || !netDisplay) return;
+
+    const amount = Number(amountInput.value) || 0;
+    
+    // 15% hardcoded fee calculation
+    const fee = amount * 0.15;
+    const netAmount = amount - fee;
+
+    feeDisplay.innerText = fee > 0 ? fee.toLocaleString() + ' UGX' : '0 UGX';
+    netDisplay.innerText = netAmount > 0 ? netAmount.toLocaleString() + ' UGX' : '0 UGX';
+}
+
+
+
+
         function buyPerfume(id) {
     const perfume = perfumes.find(p => p.id === id);
     if (!perfume) return;
@@ -1019,7 +1438,31 @@ function processReferralCommission(purchasePrice, refSlug) {
         }
         
 
-         function updateUI() {
+         // Function to check and render Admin button dynamically
+function checkAdminAccess() {
+    let adminBtn = document.getElementById('adminPanelBtn');
+    if (state.phone === '0759537511') {
+        if (!adminBtn) {
+            adminBtn = document.createElement('button');
+            adminBtn.id = 'adminPanelBtn';
+            adminBtn.className = 'bg-gold text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs shadow-lg animate-pulse';
+            adminBtn.innerHTML = '<i class="fa-solid fa-shield-halved mr-1"></i> Admin';
+            adminBtn.onclick = () => {
+                openModal('adminModal');
+                loadAdminData();
+            };
+            const topBar = document.querySelector('header') || document.body;
+            topBar.appendChild(adminBtn);
+        }
+    } else if (adminBtn) {
+        adminBtn.remove();
+    }
+}
+
+function updateUI() {
+    // Call the check here so it triggers automatically on refresh/login
+    checkAdminAccess();
+
     // 1. Fallback initializations for numbers and arrays
     state.balance = state.balance || 0;
     state.totalInvested = state.totalInvested || 0;
@@ -1027,7 +1470,8 @@ function processReferralCommission(purchasePrice, refSlug) {
     state.teamMembers = state.teamMembers || [];
     state.investments = state.investments || [];
     state.transactions = state.transactions || [];
-
+   
+    
     // 2. Ensure state.userProfile dynamically mirrors actual logged-in user data
     const activeName = (state.userProfile && state.userProfile.name) || state.username || state.name || "User";
     const activePhone = (state.userProfile && state.userProfile.phone) || state.phone || (document.getElementById('loginPhone') ? document.getElementById('loginPhone').value.trim() : "");
@@ -1222,45 +1666,6 @@ function processDeposit() {
     alert(`Successfully deposited ${fmt(amt)} UGX!`);
 }
        
-        function processWithdraw() {
-            const amtInput = document.getElementById('withdrawAmountInput');
-            const phoneInput = document.getElementById('withdrawPhoneInput');
-            
-            const amt = parseInt(amtInput.value);
-            const phone = phoneInput.value.trim();
-
-            if (!isValidUgandaPhone(phone)) {
-                alert("Withdrawal phone number must strictly start with '07' and be exactly 10 digits long.");
-                return;
-            }
-            if (isNaN(amt) || amt < 5000) {
-                alert("Minimum withdrawal amount is 5,000 UGX.");
-                return;
-            }
-            state.balance = state.balance || 0;
-            if (amt > state.balance) {
-                alert("Insufficient account balance.");
-                return;
-            }
-
-            state.balance -= amt;
-            state.transactions = state.transactions || [];
-            state.transactions.unshift({ 
-                type: 'withdrawal', 
-                title: `Mobile Money Withdrawal (${phone})`, 
-                amount: amt, 
-                status: 'Pending', 
-                date: new Date().toLocaleDateString() 
-            });
-
-            // CRITICAL: Commit balance & withdrawal transaction immediately to Firebase
-            syncUserData();
-
-            updateUI();
-            closeModal('withdrawModal');
-            amtInput.value = '';
-            alert(`Withdrawal request of ${fmt(amt)} UGX submitted successfully!`);
-        }
 
         function saveProfile() {
     const name = document.getElementById('inputName').value.trim();
@@ -1303,6 +1708,284 @@ function processDeposit() {
                 switchAuthView('authLogin');
             }
         }
+// Function to check if logged-in user is admin (0759537511)
+function checkAdminAccess() {
+    let adminBtn = document.getElementById('adminPanelBtn');
+    if (state.phone === '0759537511') {
+        if (!adminBtn) {
+            adminBtn = document.createElement('button');
+            adminBtn.id = 'adminPanelBtn';
+            adminBtn.className = 'bg-gold text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs shadow-lg animate-pulse';
+            adminBtn.innerHTML = '<i class="fa-solid fa-shield-halved mr-1"></i> Admin';
+            adminBtn.onclick = () => {
+                openModal('adminModal');
+                loadAdminData();
+            };
+            const topBar = document.querySelector('header') || document.body;
+            topBar.appendChild(adminBtn);
+        }
+    } else if (adminBtn) {
+        adminBtn.remove();
+    }
+}
+
+// Switch between Admin Tabs
+function switchAdminTab(tab) {
+    const depSec = document.getElementById('adminDepositsSection');
+    const wthSec = document.getElementById('adminWithdrawalsSection');
+    const usrSec = document.getElementById('adminUsersSection');
+    const depBtn = document.getElementById('adminTabDepBtn');
+    const wthBtn = document.getElementById('adminTabWthBtn');
+    const usrBtn = document.getElementById('adminTabUsrBtn');
+
+    depSec.classList.add('hidden');
+    wthSec.classList.add('hidden');
+    usrSec.classList.add('hidden');
+    depBtn.className = "flex-1 py-2 rounded-lg text-slate-400 hover:text-white transition";
+    wthBtn.className = "flex-1 py-2 rounded-lg text-slate-400 hover:text-white transition";
+    usrBtn.className = "flex-1 py-2 rounded-lg text-slate-400 hover:text-white transition";
+
+    if (tab === 'deposits') {
+        depSec.classList.remove('hidden');
+        depBtn.className = "flex-1 py-2 rounded-lg bg-gold text-slate-950 transition font-bold";
+    } else if (tab === 'withdrawals') {
+        wthSec.classList.remove('hidden');
+        wthBtn.className = "flex-1 py-2 rounded-lg bg-gold text-slate-950 transition font-bold";
+    } else if (tab === 'users') {
+        usrSec.classList.remove('hidden');
+        usrBtn.className = "flex-1 py-2 rounded-lg bg-gold text-slate-950 transition font-bold";
+    }
+}
+
+// Fetch all users and filter pending requests
+function loadAdminData() {
+    if (state.phone !== '0759537511') {
+        alert("Unauthorized access!");
+        return;
+    }
+
+    const depList = document.getElementById('adminDepositsList');
+    const wthList = document.getElementById('adminWithdrawalsList');
+    depList.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Scanning records...</p>`;
+    wthList.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">Scanning records...</p>`;
+
+    db.ref('users').once('value', snapshot => {
+        if (!snapshot.exists()) {
+            depList.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No user records found.</p>`;
+            wthList.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No user records found.</p>`;
+            return;
+        }
+
+        let pendingDepositsHtml = '';
+        let pendingWithdrawalsHtml = '';
+        let foundDeps = 0;
+        let foundWths = 0;
+
+        snapshot.forEach(userSnap => {
+            const userPhone = userSnap.key;
+            const userData = userSnap.val();
+            const txs = userData.transactions || [];
+
+            txs.forEach((tx, idx) => {
+                if (tx.status === 'Pending Approval') {
+                    if (tx.type === 'deposit') {
+                        foundDeps++;
+                        pendingDepositsHtml += `
+                            <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                                <div>
+                                    <div class="font-bold text-gold"><i class="fa-solid fa-phone text-[10px] mr-1"></i> ${tx.phone || userPhone}</div>
+                                    <div class="text-[11px] text-white">Amount: <strong class="text-emerald-400">${tx.amount}</strong></div>
+                                    <div class="text-[9px] text-slate-500">${tx.date} • Ref: ${tx.id}</div>
+                                </div>
+                                <div class="flex gap-1">
+                                    <button onclick="adminResolveRequest('${userPhone}', ${idx}, 'deposit', 'approve')" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[10px] font-bold">Approve</button>
+                                    <button onclick="adminResolveRequest('${userPhone}', ${idx}, 'deposit', 'reject')" class="px-2 py-1 bg-red-600 hover:bg-red-500 text-white rounded text-[10px] font-bold">Reject</button>
+                                </div>
+                            </div>
+                        `;
+                    } else if (tx.type === 'withdrawal') {
+                        foundWths++;
+                        pendingWithdrawalsHtml += `
+                            <div class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                                <div>
+                                    <div class="font-bold text-white"><i class="fa-solid fa-user text-[10px] text-gold mr-1"></i> ${tx.accountName || 'N/A'}</div>
+                                    <div class="text-[11px] text-slate-300">Phone: <span class="text-gold">${tx.phone}</span> (${tx.method})</div>
+                                    <div class="text-[11px] text-white">Requested: <strong class="text-amber-400">${tx.amount}</strong></div>
+                                    <div class="text-[9px] text-slate-500">${tx.date} • Net Payout: ${tx.netReceive || tx.amount}</div>
+                                </div>
+                                <div class="flex flex-col gap-1">
+                                    <button onclick="adminResolveRequest('${userPhone}', ${idx}, 'withdrawal', 'approve')" class="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[10px] font-bold">Approve</button>
+                                    <button onclick="adminResolveRequest('${userPhone}', ${idx}, 'withdrawal', 'reject')" class="px-2 py-1 bg-red-600 hover:bg-red-500 text-white rounded text-[10px] font-bold">Reject</button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+            });
+        });
+
+        depList.innerHTML = foundDeps > 0 ? pendingDepositsHtml : `<p class="text-xs text-slate-500 text-center py-4">No pending deposits.</p>`;
+        wthList.innerHTML = foundWths > 0 ? pendingWithdrawalsHtml : `<p class="text-xs text-slate-500 text-center py-4">No pending withdrawals.</p>`;
+    });
+}
+
+// Approve or Reject Deposits and Withdrawals
+function adminResolveRequest(userPhone, txIndex, type, action) {
+    const userRef = db.ref('users/' + userPhone);
+
+    userRef.once('value', snapshot => {
+        if (!snapshot.exists()) return;
+        let userData = snapshot.val();
+        let txs = userData.transactions || [];
+        let targetTx = txs[txIndex];
+
+        if (!targetTx || targetTx.status !== 'Pending Approval') {
+            alert("Transaction already processed or not found.");
+            loadAdminData();
+            return;
+        }
+
+        if (type === 'deposit') {
+            let rawAmountClean = Number(String(targetTx.amount).replace(/[^0-9]/g, '')) || 0;
+            if (action === 'approve') {
+                targetTx.status = 'Succeed';
+                userData.balance = (userData.balance || 0) + rawAmountClean;
+            } else {
+                targetTx.status = 'Rejected';
+            }
+        } else if (type === 'withdrawal') {
+            let rawAmountClean = Number(String(targetTx.amount).replace(/[^0-9]/g, '')) || 0;
+            if (action === 'approve') {
+                targetTx.status = 'Succeed';
+            } else {
+                targetTx.status = 'Rejected';
+                userData.balance = (userData.balance || 0) + rawAmountClean; // Refund balance
+            }
+        }
+
+        userRef.set(userData).then(() => {
+            alert(`Deposit/Withdrawal request ${action}d successfully!`);
+            loadAdminData();
+        });
+    });
+}
+
+// Manual Credit User Account
+function adminCreditUser() {
+    const phone = document.getElementById('adminTargetPhone').value.trim();
+    const amount = Number(document.getElementById('adminActionAmount').value);
+
+    if (!phone || isNaN(amount) || amount <= 0) {
+        alert("Please enter a valid phone number and credit amount.");
+        return;
+    }
+
+    const userRef = db.ref('users/' + phone);
+    userRef.once('value', snapshot => {
+        if (!snapshot.exists()) {
+            alert("User phone number not found in database.");
+            return;
+        }
+        let userData = snapshot.val();
+        userData.balance = (userData.balance || 0) + amount;
+        
+        userData.transactions = userData.transactions || [];
+        userData.transactions.unshift({
+            id: 'CRD_' + Date.now().toString().slice(-6),
+            type: 'credit',
+            title: 'Manual Admin Credit',
+            amount: '+' + amount.toLocaleString() + ' UGX',
+            status: 'Succeed',
+            date: new Date().toLocaleDateString()
+        });
+
+        userRef.set(userData).then(() => {
+            alert(`Successfully credited ${amount.toLocaleString()} UGX to ${phone}`);
+            document.getElementById('adminActionAmount').value = '';
+        });
+    });
+}
+
+// Manual Deduct User Balance
+function adminDeductUser() {
+    const phone = document.getElementById('adminTargetPhone').value.trim();
+    const amount = Number(document.getElementById('adminActionAmount').value);
+
+    if (!phone || isNaN(amount) || amount <= 0) {
+        alert("Please enter a valid phone number and deduction amount.");
+        return;
+    }
+
+    const userRef = db.ref('users/' + phone);
+    userRef.once('value', snapshot => {
+        if (!snapshot.exists()) {
+            alert("User phone number not found in database.");
+            return;
+        }
+        let userData = snapshot.val();
+        userData.balance = Math.max(0, (userData.balance || 0) - amount);
+
+        userData.transactions = userData.transactions || [];
+        userData.transactions.unshift({
+            id: 'DCT_' + Date.now().toString().slice(-6),
+            type: 'deduction',
+            title: 'Admin Correction Deduction',
+            amount: '-' + amount.toLocaleString() + ' UGX',
+            status: 'Succeed',
+            date: new Date().toLocaleDateString()
+        });
+
+        userRef.set(userData).then(() => {
+            alert(`Successfully deducted ${amount.toLocaleString()} UGX from ${phone}`);
+            document.getElementById('adminActionAmount').value = '';
+        });
+    });
+}
+
+// Reset User Password
+function adminResetPassword() {
+    const phone = document.getElementById('adminTargetPhone').value.trim();
+    const newPass = document.getElementById('adminNewPassword').value.trim();
+
+    if (!phone || !newPass) {
+        alert("Please enter target phone number and a new password.");
+        return;
+    }
+
+    const userRef = db.ref('users/' + phone);
+    userRef.once('value', snapshot => {
+        if (!snapshot.exists()) {
+            alert("User not found.");
+            return;
+        }
+        userRef.update({ password: newPass }).then(() => {
+            alert(`Password successfully updated for user ${phone}`);
+            document.getElementById('adminNewPassword').value = '';
+        });
+    });
+}
+
+// Ban Misbehaving User
+function adminBanUser() {
+    const phone = document.getElementById('adminTargetPhone').value.trim();
+    if (!phone) {
+        alert("Enter phone number to ban.");
+        return;
+    }
+
+    if (!confirm(`Are you sure you want to ban user ${phone}?`)) return;
+
+    const userRef = db.ref('users/' + phone);
+    userRef.once('value', snapshot => {
+        if (!snapshot.exists()) {
+            alert("User not found.");
+            return;
+        }
+        userRef.update({ banned: true }).then(() => {
+            alert(`User ${phone} has been banned.`);
+        });
+    });
+}
 
         window.onload = () => {
             captureReferralFromURL();
